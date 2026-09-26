@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { Check, Lock, Mail, User } from "lucide-react";
+import { Lock, Mail, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OrDivider, PasswordField, SocialButtons, SubmitButton, TextField } from "../_components/form-controls";
 
@@ -12,10 +12,10 @@ type Errors = Partial<Record<Field, string>>;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PASSWORD_RULES = [
-  { label: "8+ characters", test: (v: string) => v.length >= 8 },
-  { label: "Uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
-  { label: "Number", test: (v: string) => /\d/.test(v) },
-  { label: "Symbol", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+  { hint: "more characters", test: (v: string) => v.length >= 8 },
+  { hint: "an uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
+  { hint: "a number", test: (v: string) => /\d/.test(v) },
+  { hint: "a symbol", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
 ];
 
 const STRENGTH = [
@@ -33,6 +33,7 @@ export function SignUpForm() {
 
   const passed = PASSWORD_RULES.filter((rule) => rule.test(password)).length;
   const strength = STRENGTH[passed];
+  const missing = PASSWORD_RULES.find((rule) => !rule.test(password));
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,11 +63,11 @@ export function SignUpForm() {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-[1.85rem] font-bold leading-tight tracking-tight text-slate-900">
+      <div className="mb-6 text-center short:mb-4">
+        <h1 className="text-[1.75rem] font-bold leading-tight short:text-2xl tracking-tight text-slate-900">
           Create your account
         </h1>
-        <p className="mt-2 text-[0.95rem] text-slate-500">
+        <p className="mt-1.5 text-[0.95rem] text-slate-500 short:text-sm">
           Start learning for free. No credit card required.
         </p>
       </div>
@@ -74,8 +75,8 @@ export function SignUpForm() {
       <SocialButtons action="Sign up" />
       <OrDivider label="or sign up with email" />
 
-      <form noValidate onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid gap-5 sm:grid-cols-2">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4 short:space-y-3">
+        <div className="grid grid-cols-2 gap-3">
           <TextField
             label="First name"
             icon={User}
@@ -107,13 +108,13 @@ export function SignUpForm() {
           onChange={clear("email")}
         />
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <PasswordField
             label="Password"
             icon={Lock}
             name="password"
             autoComplete="new-password"
-            placeholder="Create a strong password"
+            placeholder="8+ characters, mixed case, number"
             value={password}
             error={errors.password}
             onChange={(e) => {
@@ -122,48 +123,23 @@ export function SignUpForm() {
             }}
           />
 
-          {password && (
-            <div className="space-y-2.5 animate-in fade-in slide-in-from-top-1">
-              <div className="flex items-center gap-3">
-                <div className="grid flex-1 grid-cols-4 gap-1.5">
-                  {PASSWORD_RULES.map((_, i) => (
-                    <span
-                      key={i}
-                      className={cn(
-                        "h-1.5 rounded-full transition-colors duration-300",
-                        i < passed ? strength.bar : "bg-slate-200",
-                      )}
-                    />
-                  ))}
-                </div>
-                <span className={cn("w-16 text-right text-xs font-semibold", strength.text)}>
-                  {strength.label}
-                </span>
+          {password && !errors.password && (
+            <div className="flex items-center gap-3 animate-in fade-in" aria-live="polite">
+              <div className="grid flex-1 grid-cols-4 gap-1.5">
+                {PASSWORD_RULES.map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "h-1.5 rounded-full transition-colors duration-300",
+                      i < passed ? strength.bar : "bg-slate-200",
+                    )}
+                  />
+                ))}
               </div>
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                {PASSWORD_RULES.map((rule) => {
-                  const ok = rule.test(password);
-                  return (
-                    <li
-                      key={rule.label}
-                      className={cn(
-                        "flex items-center gap-1.5 text-xs transition-colors",
-                        ok ? "text-emerald-600" : "text-slate-400",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "flex size-3.5 items-center justify-center rounded-full transition-colors",
-                          ok ? "bg-emerald-500 text-white" : "bg-slate-200",
-                        )}
-                      >
-                        {ok && <Check className="size-2.5" strokeWidth={3.5} />}
-                      </span>
-                      {rule.label}
-                    </li>
-                  );
-                })}
-              </ul>
+              <span className="shrink-0 text-xs text-slate-500">
+                <span className={cn("font-semibold", strength.text)}>{strength.label}</span>
+                {missing && <> &middot; add {missing.hint}</>}
+              </span>
             </div>
           )}
         </div>
@@ -197,7 +173,7 @@ export function SignUpForm() {
         <SubmitButton loading={loading}>Create account</SubmitButton>
       </form>
 
-      <p className="mt-8 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-500 short:mt-4">
         Already have an account?{" "}
         <Link
           href="/sign-in"

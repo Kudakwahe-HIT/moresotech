@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Short viewports (e.g. 768px-tall laptops) — used to keep auth pages scroll-free */
+@custom-variant short (@media (max-height: 820px));
 
 @theme inline {
   --color-background: var(--background);

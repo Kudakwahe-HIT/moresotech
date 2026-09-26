@@ -36,11 +36,11 @@ export function SignInForm() {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-[1.85rem] font-bold leading-tight tracking-tight text-slate-900">
+      <div className="mb-6 text-center short:mb-4">
+        <h1 className="text-[1.75rem] font-bold leading-tight short:text-2xl tracking-tight text-slate-900">
           Welcome back
         </h1>
-        <p className="mt-2 text-[0.95rem] text-slate-500">
+        <p className="mt-1.5 text-[0.95rem] text-slate-500 short:text-sm">
           Sign in to continue your learning journey.
         </p>
       </div>
@@ -48,7 +48,7 @@ export function SignInForm() {
       <SocialButtons action="Sign in" />
       <OrDivider />
 
-      <form noValidate onSubmit={handleSubmit} className="space-y-5">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4 short:space-y-3">
         <TextField
           label="Email address"
           icon={Mail}
@@ -68,29 +68,29 @@ export function SignInForm() {
           placeholder="Enter your password"
           error={errors.password}
           onChange={clear("password")}
-          labelAside={
-            <Link
-              href="/forgot-password"
-              className="text-sm font-semibold text-brand-blue transition-colors hover:text-brand-blue-dark"
-            >
-              Forgot password?
-            </Link>
-          }
         />
 
-        <label className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-slate-600">
-          <input
-            type="checkbox"
-            name="remember"
-            className="size-4 cursor-pointer rounded border-slate-300 accent-brand-blue"
-          />
-          Keep me signed in for 30 days
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              name="remember"
+              className="size-4 cursor-pointer rounded border-slate-300 accent-brand-blue"
+            />
+            Keep me signed in
+          </label>
+          <Link
+            href="/forgot-password"
+            className="text-sm font-semibold text-brand-blue transition-colors hover:text-brand-blue-dark"
+          >
+            Forgot password?
+          </Link>
+        </div>
 
         <SubmitButton loading={loading}>Sign in</SubmitButton>
       </form>
 
-      <p className="mt-8 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-500 short:mt-4">
         New to MoreSo Tech?{" "}
         <Link
           href="/sign-up"

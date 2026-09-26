@@ -13,7 +13,7 @@ type FieldProps = Omit<ComponentProps<"input">, "id"> & {
 };
 
 const inputClass =
-  "peer h-12 w-full rounded-xl border bg-white pl-11 text-[0.95rem] text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-400 focus:ring-4";
+  "peer h-11 w-full rounded-xl short:h-10 border bg-white pl-11 text-[0.95rem] text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-400 focus:ring-4";
 
 export function TextField({ label, icon: Icon, error, labelAside, className, ...props }: FieldProps) {
   const id = useId();
@@ -50,7 +50,7 @@ export function PasswordField({ label, icon: Icon, error, labelAside, className,
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
-        className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30"
+        className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30"
       >
         {visible ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
       </button>
@@ -72,7 +72,7 @@ function FieldFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <label htmlFor={id} className="text-sm font-semibold text-slate-700">
           {label}
@@ -106,7 +106,7 @@ export function SubmitButton({ loading, children }: { loading: boolean; children
     <button
       type="submit"
       disabled={loading}
-      className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-brand-orange px-4 text-[0.95rem] font-semibold text-white shadow-[0_8px_20px_-6px_rgba(245,130,32,0.55)] transition hover:bg-brand-orange-dark hover:shadow-[0_10px_24px_-6px_rgba(245,130,32,0.65)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-orange/25 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-80"
+      className="group relative flex h-11 w-full short:h-10 items-center justify-center gap-2 overflow-hidden rounded-xl bg-brand-orange px-4 text-[0.95rem] font-semibold text-white shadow-[0_8px_20px_-6px_rgba(245,130,32,0.55)] transition hover:bg-brand-orange-dark hover:shadow-[0_10px_24px_-6px_rgba(245,130,32,0.65)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-orange/25 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-80"
     >
       {loading ? (
         <LoaderCircle className="size-5 animate-spin" />
@@ -138,7 +138,7 @@ function SocialButton({ label, name, children }: { label: string; name: string; 
     <button
       type="button"
       aria-label={label}
-      className="flex h-12 items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-blue/10 active:scale-[0.99]"
+      className="flex h-11 items-center justify-center gap-2.5 rounded-xl short:h-10 border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-blue/10 active:scale-[0.99]"
     >
       {children}
       {name}
@@ -148,7 +148,7 @@ function SocialButton({ label, name, children }: { label: string; name: string; 
 
 export function OrDivider({ label = "or continue with email" }: { label?: string }) {
   return (
-    <div className="relative my-7 flex items-center">
+    <div className="relative my-5 flex items-center short:my-4">
       <div className="h-px flex-1 bg-slate-200" />
       <span className="px-4 text-xs font-medium uppercase tracking-wider text-slate-400">{label}</span>
       <div className="h-px flex-1 bg-slate-200" />

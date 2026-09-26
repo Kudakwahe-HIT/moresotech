@@ -10,9 +10,6 @@ export const metadata: Metadata = {
 export default function SignInPage() {
   return (
     <AuthShell
-      switchPrompt="Don't have an account?"
-      switchLabel="Sign up"
-      switchHref="/sign-up"
       illustration={{ src: "/illustrations/sign-in.svg", alt: "Person signing in on a large screen" }}
       eyebrow="Learn. Grow. Advance."
       headline="Pick up right where you left off."
