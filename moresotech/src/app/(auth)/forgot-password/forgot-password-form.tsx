@@ -1,71 +1,134 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, Mail, MailCheck } from "lucide-react";
-import { SubmitButton, TextField } from "../_components/form-controls";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { useSignIn, useUser } from "@clerk/nextjs";
+import { ArrowLeft, KeyRound, Lock, Mail } from "lucide-react";
+import { describeClerkError } from "../_components/clerk-helpers";
+import { FormAlert, PasswordField, SubmitButton, TextField } from "../_components/form-controls";
+import { SuccessModal } from "../_components/success-modal";
+import { useRedirectIfSignedIn } from "../_components/use-redirect-if-signed-in";
+
+type Field = "email" | "code" | "password";
+type Errors = Partial<Record<Field, string>>;
+type Step = "email" | "reset" | "done";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ForgotPasswordForm() {
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(false);
-  const [sentTo, setSentTo] = useState<string>();
+  const router = useRouter();
+  const { signIn } = useSignIn();
+  const { user } = useUser();
+  useRedirectIfSignedIn();
 
-  function sendLink(email: string) {
-    setLoading(true);
-    // TODO: call the password-reset endpoint here.
-    setTimeout(() => {
-      setLoading(false);
-      setSentTo(email);
-    }, 1200);
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [errors, setErrors] = useState<Errors>({});
+  const [alert, setAlert] = useState<string>();
+  const [pending, setPending] = useState(false);
+
+  function fail(error: unknown) {
+    const { field, message } = describeClerkError(error);
+    if (field === "email" || field === "code" || field === "password") setErrors({ [field]: message });
+    else setAlert(message);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function sendCode(emailValue: string) {
+    const { error } = await signIn.create({ identifier: emailValue });
+    if (error) return fail(error);
+    const { error: sendError } = await signIn.resetPasswordEmailCode.sendCode();
+    if (sendError) return fail(sendError);
+    setStep("reset");
+  }
+
+  async function handleEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const email = String(new FormData(event.currentTarget).get("email") ?? "").trim();
-    if (!email) return setError("Enter your email address.");
-    if (!EMAIL_RE.test(email)) return setError("Enter a valid email address.");
-    setError(undefined);
-    sendLink(email);
+    const emailValue = String(new FormData(event.currentTarget).get("email") ?? "").trim();
+    setAlert(undefined);
+    if (!emailValue) return setErrors({ email: "Enter your email address." });
+    if (!EMAIL_RE.test(emailValue)) return setErrors({ email: "Enter a valid email address." });
+
+    setEmail(emailValue);
+    setPending(true);
+    try {
+      await sendCode(emailValue);
+    } finally {
+      setPending(false);
+    }
   }
 
-  if (sentTo) {
+  async function handleReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const code = String(data.get("code") ?? "").trim();
+    const password = String(data.get("password") ?? "");
+    setAlert(undefined);
+
+    const next: Errors = {};
+    if (!/^\d{6}$/.test(code)) next.code = "Enter the 6-digit code.";
+    if (password.length < 8) next.password = "Use at least 8 characters.";
+    setErrors(next);
+    if (Object.keys(next).length) return;
+
+    setPending(true);
+    try {
+      // Only verify the code once; if the password is rejected the user can fix it and resubmit.
+      if (signIn.status !== "needs_new_password") {
+        const { error } = await signIn.resetPasswordEmailCode.verifyCode({ code });
+        if (error) return fail(error);
+      }
+      const { error } = await signIn.resetPasswordEmailCode.submitPassword({ password });
+      if (error) return fail(error);
+
+      if (signIn.status !== "complete") {
+        return setAlert("Your password was changed. Please sign in to continue.");
+      }
+      const { error: finalizeError } = await signIn.finalize({ navigate: () => {} });
+      if (finalizeError) return fail(finalizeError);
+      setStep("done");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  const clear = (field: Field) => () => {
+    setAlert(undefined);
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  if (step === "email") {
     return (
-      <div className="text-center animate-in fade-in zoom-in-95 duration-300">
-        <IconBadge>
-          <MailCheck className="size-6" />
-        </IconBadge>
-        <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-slate-900 short:text-2xl">
-          Check your email
-        </h1>
-        <p className="mt-2 text-[0.95rem] leading-relaxed text-slate-500 short:text-sm">
-          We sent a password reset link to{" "}
-          <span className="font-semibold text-slate-800">{sentTo}</span>. It may take a minute to arrive.
-        </p>
+      <>
+        <div className="mb-6 text-center short:mb-4">
+          <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-slate-900 short:text-2xl">
+            Forgot your password?
+          </h1>
+          <p className="mt-1.5 text-[0.95rem] leading-relaxed text-slate-500 short:text-sm">
+            No worries. Enter the email linked to your account and we&apos;ll send you a reset code.
+          </p>
+        </div>
 
-        <a
-          href="mailto:"
-          className="mt-6 flex h-11 w-full items-center justify-center rounded-xl bg-brand-orange text-[0.95rem] font-semibold text-white shadow-[0_8px_20px_-6px_rgba(245,130,32,0.55)] transition hover:bg-brand-orange-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-orange/25 short:h-10"
-        >
-          Open email app
-        </a>
+        <FormAlert message={alert} />
 
-        <p className="mt-5 text-center text-sm text-slate-500">
-          Didn&apos;t get it? Check your spam folder or{" "}
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => sendLink(sentTo)}
-            className="font-semibold text-brand-blue transition-colors hover:text-brand-blue-dark disabled:opacity-60"
-          >
-            {loading ? "sending…" : "resend"}
-          </button>
-          .
-        </p>
+        <form noValidate onSubmit={handleEmail} className="space-y-4 short:space-y-3">
+          <TextField
+            label="Email address"
+            icon={Mail}
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            defaultValue={email}
+            autoFocus
+            error={errors.email}
+            onChange={clear("email")}
+          />
+          <SubmitButton loading={pending}>Send reset code</SubmitButton>
+        </form>
 
         <BackToSignIn />
-      </div>
+      </>
     );
   }
 
@@ -73,38 +136,75 @@ export function ForgotPasswordForm() {
     <>
       <div className="mb-6 text-center short:mb-4">
         <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-slate-900 short:text-2xl">
-          Forgot your password?
+          Set a new password
         </h1>
         <p className="mt-1.5 text-[0.95rem] leading-relaxed text-slate-500 short:text-sm">
-          No worries. Enter the email linked to your account and we&apos;ll send you a reset link.
+          Enter the 6-digit code we sent to <span className="font-semibold text-slate-700">{email}</span> and
+          choose a new password.
         </p>
       </div>
 
-      <form noValidate onSubmit={handleSubmit} className="space-y-4 short:space-y-3">
+      <FormAlert message={alert} />
+
+      <form noValidate onSubmit={handleReset} className="space-y-4 short:space-y-3">
         <TextField
-          label="Email address"
-          icon={Mail}
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
+          label="Reset code"
+          icon={KeyRound}
+          name="code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          placeholder="123456"
           autoFocus
-          error={error}
-          onChange={() => error && setError(undefined)}
+          className="tracking-[0.4em]"
+          error={errors.code}
+          onChange={clear("code")}
         />
-        <SubmitButton loading={loading}>Send reset link</SubmitButton>
+        <PasswordField
+          label="New password"
+          icon={Lock}
+          name="password"
+          autoComplete="new-password"
+          placeholder="At least 8 characters"
+          error={errors.password}
+          onChange={clear("password")}
+        />
+        <SubmitButton loading={pending}>Reset password</SubmitButton>
       </form>
 
-      <BackToSignIn />
-    </>
-  );
-}
+      <p className="mt-5 text-center text-sm text-slate-500">
+        Didn&apos;t get it? Check your spam folder or{" "}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={async () => {
+            setAlert(undefined);
+            const { error } = await signIn.resetPasswordEmailCode.sendCode();
+            if (error) fail(error);
+          }}
+          className="font-semibold text-brand-blue transition-colors hover:text-brand-blue-dark disabled:opacity-60"
+        >
+          resend
+        </button>
+        .
+      </p>
 
-function IconBadge({ children }: { children: ReactNode }) {
-  return (
-    <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-2xl bg-brand-blue/10 text-brand-blue ring-8 ring-brand-blue/[0.04] short:mb-4">
-      {children}
-    </div>
+      <BackToSignIn />
+
+      {step === "done" && user && (
+        <SuccessModal
+          title={`Password updated${user.firstName ? `, ${user.firstName}` : ""}!`}
+          message={
+            <>
+              You&apos;re signed in as{" "}
+              <span className="font-semibold text-slate-700">{user.primaryEmailAddress?.emailAddress}</span>.
+            </>
+          }
+          actionLabel="Continue"
+          onAction={() => router.push("/dashboard")}
+        />
+      )}
+    </>
   );
 }
 

@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: "Sign in to your MoreSo Tech account.",
 };
 
-export default function SignInPage() {
+export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
+  const { welcome } = await searchParams;
   return (
     <AuthShell
       illustration={{ src: "/illustrations/sign-in.svg", alt: "Person signing in on a large screen" }}
@@ -20,7 +21,7 @@ export default function SignInPage() {
         "Learn from industry practitioners",
       ]}
     >
-      <SignInForm />
+      <SignInForm welcome={welcome === "1"} />
     </AuthShell>
   );
 }
