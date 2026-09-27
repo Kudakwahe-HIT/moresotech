@@ -8,22 +8,27 @@ import {
   CalendarClock,
   Check,
   CircleCheck,
-  Flame,
+  ClipboardCheck,
   GraduationCap,
   Mail,
   ShieldCheck,
   UserRound,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { DeadlineChip } from "@/components/scholarships/deadline-chip";
 import { listClosingSoon } from "@/lib/scholarships";
-import { eq } from "drizzle-orm";
-import { applications } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
+import { applications, certificates, enrollments } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getNotifications } from "@/lib/notifications";
+import { listCoursesForStudent } from "@/lib/courses";
+import { nextWebinarsForStudent } from "@/lib/webinars";
+import { ProgressRing } from "@/components/applications/progress-ring";
+import { Countdown, LocalTime } from "@/components/learning/time";
 import { CalendarCard } from "@/components/shell/calendar-card";
 import { UserAvatar } from "@/components/shell/user-avatar";
 
@@ -38,8 +43,6 @@ const PROVIDER_NAMES: Record<string, string> = {
   linkedin: "LinkedIn",
 };
 
-const WEEK = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
 export default async function DashboardPage() {
   // proxy.ts guarantees a signed-in user here.
   const [user, closingSoon, profile] = await Promise.all([
@@ -53,6 +56,8 @@ export default async function DashboardPage() {
     db.select({ id: applications.id }).from(applications).where(eq(applications.profileId, profile.id)).limit(1),
   ]);
   const nextStep = notifications.find((n) => n.actionRequired);
+  const [myCoursesAll, webinarsSoon] = await Promise.all([listCoursesForStudent(profile.id, "mine"), nextWebinarsForStudent(profile.id, 3)]);
+  const myCourses = myCoursesAll.filter((c) => c.enrollmentStatus !== "completed").slice(0, 3);
   const hasApplication = Boolean(firstApplication);
 
   const email = user.primaryEmailAddress?.emailAddress ?? "";
@@ -66,11 +71,23 @@ export default async function DashboardPage() {
   });
 
   // Course data doesn't exist yet, so these start at zero rather than showing made-up numbers.
-  const stats: { label: string; value: string; hint: string; icon: LucideIcon; tone: string }[] = [
-    { label: "Courses in progress", value: "0", hint: "Enroll to get started", icon: BookOpen, tone: "bg-brand-blue/10 text-brand-blue" },
-    { label: "Completed", value: "0", hint: "Finish a course to see it here", icon: CircleCheck, tone: "bg-emerald-500/10 text-emerald-600" },
-    { label: "Certificates", value: "0", hint: "Earned on completion", icon: Award, tone: "bg-brand-orange/10 text-brand-orange-dark" },
-    { label: "Learning streak", value: "0 days", hint: "Learn daily to build it", icon: Flame, tone: "bg-rose-500/10 text-rose-600" },
+  // Real counts from the learning and applications tables.
+  const [[counts]] = await Promise.all([
+    db
+      .select({
+        inProgress: sql<number>`count(*) filter (where ${enrollments.status} = 'active')::int`,
+        completed: sql<number>`count(*) filter (where ${enrollments.status} = 'completed')::int`,
+        certificates: sql<number>`(select count(*)::int from ${certificates} c where c.profile_id = ${profile.id})`,
+        applications: sql<number>`(select count(*)::int from ${applications} a where a.profile_id = ${profile.id})`,
+      })
+      .from(enrollments)
+      .where(eq(enrollments.profileId, profile.id)),
+  ]);
+  const stats: { label: string; value: string; hint: string; icon: LucideIcon; tone: string; href: string }[] = [
+    { label: "Courses in progress", value: String(counts.inProgress), hint: counts.inProgress ? "Keep going!" : "Enroll to get started", icon: BookOpen, tone: "bg-brand-blue/10 text-brand-blue", href: "/dashboard/courses?tab=mine" },
+    { label: "Completed", value: String(counts.completed), hint: "Courses finished", icon: CircleCheck, tone: "bg-emerald-500/10 text-emerald-600", href: "/dashboard/courses?tab=mine" },
+    { label: "Certificates", value: String(counts.certificates), hint: "Verifiable online", icon: Award, tone: "bg-brand-orange/10 text-brand-orange-dark", href: "/dashboard/courses?tab=certificates" },
+    { label: "Applications", value: String(counts.applications), hint: "Scholarships you're applying for", icon: ClipboardCheck, tone: "bg-violet-500/10 text-violet-600", href: "/dashboard/applications" },
   ];
 
   const checklist = [
@@ -110,7 +127,7 @@ export default async function DashboardPage() {
           <SectionTitle id="progress-heading">Your progress</SectionTitle>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {stats.map((stat) => (
-              <Card key={stat.label} className="p-5">
+              <Link key={stat.label} href={stat.href} className="block rounded-3xl bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className="flex items-center gap-3">
                   <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-full", stat.tone)}>
                     <stat.icon className="size-5" />
@@ -119,24 +136,47 @@ export default async function DashboardPage() {
                 </div>
                 <p className="mt-4 text-[1.75rem] font-bold leading-none tracking-tight text-slate-900">{stat.value}</p>
                 <p className="mt-1.5 text-xs text-slate-400">{stat.hint}</p>
-              </Card>
+              </Link>
             ))}
           </div>
         </section>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Learning activity */}
-          <Card className="p-6">
+          {/* Upcoming webinars (real data) */}
+          <Card className="flex flex-col p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Learning activity</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Hours spent learning this week</p>
+                <h2 className="text-lg font-bold text-slate-900">Upcoming webinars</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Live sessions with experts</p>
               </div>
-              <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500">
-                Weekly
-              </span>
+              <Link href="/dashboard/webinars" className="text-sm font-semibold text-brand-blue hover:text-brand-blue-dark">
+                View all
+              </Link>
             </div>
-            <ActivityChart />
+            {webinarsSoon.length ? (
+              <ul className="mt-4 space-y-2">
+                {webinarsSoon.map((w) => (
+                  <li key={w.id}>
+                    <Link href="/dashboard/webinars" className="flex items-center gap-3 rounded-2xl p-2.5 transition hover:bg-slate-50">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#0f1b2d] text-white">
+                        <Video className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-slate-900">{w.title}</span>
+                        <span className="block truncate text-xs text-slate-500">
+                          <LocalTime iso={w.startsAt.toISOString()} />
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-brand-orange/10 px-2.5 py-1 text-xs font-semibold text-brand-orange-dark">
+                        <Countdown iso={w.startsAt.toISOString()} durationMinutes={w.durationMinutes} />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={Video} title="No sessions scheduled" body="New webinars will appear here as soon as they're announced." className="flex-1" />
+            )}
           </Card>
 
           {/* Scholarships closing soon (real data) */}
@@ -181,19 +221,41 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        {/* Courses you're taking */}
+        {/* Courses you're taking (real data) */}
         <Card className="p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-slate-900">Courses you&apos;re taking</h2>
-            <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500">
-              Active
-            </span>
+            <Link href="/dashboard/courses?tab=mine" className="text-sm font-semibold text-brand-blue hover:text-brand-blue-dark">
+              My learning
+            </Link>
           </div>
-          <EmptyState
-            icon={GraduationCap}
-            title="No courses yet"
-            body="When you enroll in a course, it will appear here with your progress so you can jump straight back in."
-          />
+          {myCourses.length ? (
+            <ul className="mt-4 divide-y divide-slate-100">
+              {myCourses.map(({ course, lessonCount, completedCount, enrollmentStatus }) => {
+                const pct = lessonCount ? Math.round((completedCount / lessonCount) * 100) : 0;
+                return (
+                  <li key={course.id}>
+                    <Link href={`/dashboard/courses/${course.slug}`} className="flex items-center gap-4 py-3 transition hover:opacity-80">
+                      <ProgressRing percent={pct} size={44} stroke={5} className="[&_span]:text-[0.65rem]" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-slate-900">{course.title}</span>
+                        <span className="block text-xs text-slate-500">
+                          {enrollmentStatus === "pending_payment" ? "Awaiting payment confirmation" : `${completedCount} of ${lessonCount} lessons`}
+                        </span>
+                      </span>
+                      <ArrowRight className="size-4 text-slate-400" />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={GraduationCap}
+              title="No courses yet"
+              body="Enroll in a language or test-prep course to build the certificates scholarships ask for."
+            />
+          )}
         </Card>
       </div>
 
@@ -271,44 +333,6 @@ export default async function DashboardPage() {
           </dl>
         </Card>
       </aside>
-    </div>
-  );
-}
-
-/** Empty weekly chart: axes and day labels are real, bars appear once learning time is tracked. */
-function ActivityChart() {
-  const today = new Date().getDay();
-  return (
-    <div className="relative mt-6">
-      <div className="grid grid-cols-[2rem_1fr] gap-2">
-        <div className="flex h-44 flex-col justify-between text-right text-[0.7rem] text-slate-400">
-          {["8h", "6h", "4h", "2h", "0h"].map((label) => (
-            <span key={label}>{label}</span>
-          ))}
-        </div>
-        <div className="relative flex h-44 items-end justify-around border-b border-slate-100">
-          {[0, 1, 2, 3].map((i) => (
-            <span key={i} aria-hidden className="absolute inset-x-0 border-t border-dashed border-slate-100" style={{ top: `${i * 25}%` }} />
-          ))}
-          {WEEK.map((day, i) => (
-            <span
-              key={day}
-              aria-hidden
-              className={cn("h-1.5 w-2.5 rounded-full", i === today ? "bg-brand-orange/50" : "bg-slate-200")}
-            />
-          ))}
-          <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm font-medium text-slate-400">
-            No learning activity yet this week
-          </p>
-        </div>
-      </div>
-      <div className="ml-10 mt-2 flex justify-around text-xs text-slate-400">
-        {WEEK.map((day, i) => (
-          <span key={day} className={cn(i === today && "font-bold text-brand-orange-dark")}>
-            {day}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }

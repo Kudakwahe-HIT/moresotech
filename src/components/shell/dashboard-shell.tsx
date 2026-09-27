@@ -44,7 +44,7 @@ export function DashboardShell({
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-dvh flex-1 bg-[#f4f6f9] text-slate-900 lg:p-4">
+    <div className="flex min-h-dvh flex-1 bg-[#f4f6f9] text-slate-900 lg:p-4 print:bg-white print:p-0">
       {/* Mobile overlay */}
       <div
         aria-hidden
@@ -91,7 +91,7 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-[#0f1b2d] p-5 text-slate-300 transition-transform duration-300",
+        "fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-[#0f1b2d] p-5 text-slate-300 transition-transform duration-300 print:hidden",
         "lg:sticky lg:top-4 lg:h-[calc(100dvh-2rem)] lg:translate-x-0 lg:rounded-3xl",
         open ? "translate-x-0" : "-translate-x-full",
       )}
@@ -183,7 +183,7 @@ function TopBar({
   onOpenMenu: () => void;
 }) {
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-3 bg-[#f4f6f9]/85 px-4 py-4 backdrop-blur-md sm:px-6 lg:static lg:bg-transparent lg:px-0 lg:pb-6 lg:pr-2 lg:pt-3 lg:backdrop-blur-none">
+    <header className="sticky top-0 z-30 flex items-center gap-3 print:hidden bg-[#f4f6f9]/85 px-4 py-4 backdrop-blur-md sm:px-6 lg:static lg:bg-transparent lg:px-0 lg:pb-6 lg:pr-2 lg:pt-3 lg:backdrop-blur-none">
       <button
         type="button"
         onClick={onOpenMenu}

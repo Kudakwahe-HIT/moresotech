@@ -16,5 +16,12 @@ export default defineConfig({
     "application_documents",
     "application_events",
     "document_access_log",
+    "courses",
+    "lessons",
+    "enrollments",
+    "lesson_progress",
+    "certificates",
+    "webinars",
+    "webinar_registrations",
   ],
 });

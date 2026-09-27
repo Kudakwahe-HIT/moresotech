@@ -34,6 +34,14 @@ export const applicationStatusEnum = pgEnum("application_status", [
 ]);
 export const documentStatusEnum = pgEnum("document_status", ["pending", "verified", "needs_revision"]);
 export const requirementKindEnum = pgEnum("requirement_kind", ["document", "certificate"]);
+export const courseStatusEnum = pgEnum("course_status", ["draft", "published", "archived"]);
+export const enrollmentStatusEnum = pgEnum("enrollment_status", [
+  "pending_payment", // requested a paid course; waiting for staff to confirm payment
+  "active",
+  "completed",
+  "cancelled",
+]);
+export const webinarAccessEnum = pgEnum("webinar_access", ["everyone", "enrolled"]);
 
 /**
  * One row per Clerk user, created on first visit to the app. Clerk owns sign-in;
@@ -179,6 +187,140 @@ export const documentAccessLog = pgTable(
   (t) => [index("document_access_log_document_idx").on(t.documentId)],
 );
 
+export const courses = pgTable(
+  "courses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull(),
+    description: text("description"),
+    category: text("category").notNull(), // language | test_prep | documents | interview | other
+    /** Price in cents; 0 = free. */
+    priceCents: integer("price_cents").notNull().default(0),
+    currency: text("currency").notNull().default("USD"),
+    outcomes: text("outcomes").array().notNull().default([]),
+    instructorId: text("instructor_id").references(() => profiles.id, { onDelete: "set null" }),
+    awardsCertificate: boolean("awards_certificate").notNull().default(true),
+    certificateName: text("certificate_name"),
+    status: courseStatusEnum("status").notNull().default("draft"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("courses_status_idx").on(t.status)],
+);
+
+export const lessons = pgTable(
+  "lessons",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    title: text("title").notNull(),
+    summary: text("summary"),
+    content: text("content"),
+    /** YouTube / Vimeo / other link. */
+    videoUrl: text("video_url"),
+    durationMinutes: integer("duration_minutes"),
+    freePreview: boolean("free_preview").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("lessons_course_position_idx").on(t.courseId, t.position)],
+);
+
+export const enrollments = pgTable(
+  "enrollments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    status: enrollmentStatusEnum("status").notNull(),
+    /** Staff member who confirmed payment / activated access. */
+    activatedBy: text("activated_by").references(() => profiles.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("enrollments_course_profile_key").on(t.courseId, t.profileId), index("enrollments_status_idx").on(t.status)],
+);
+
+export const lessonProgress = pgTable(
+  "lesson_progress",
+  {
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    lessonId: uuid("lesson_id")
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.profileId, t.lessonId] })],
+);
+
+/** Issued when a student completes every lesson. `code` powers the public /verify page. */
+export const certificates = pgTable(
+  "certificates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    code: text("code").notNull().unique(),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "restrict" }),
+    /** Frozen at issue time so later edits don't change an issued certificate. */
+    recipientName: text("recipient_name").notNull(),
+    certificateName: text("certificate_name").notNull(),
+    issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("certificates_profile_course_key").on(t.profileId, t.courseId)],
+);
+
+export const webinars = pgTable(
+  "webinars",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    hostName: text("host_name").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    durationMinutes: integer("duration_minutes").notNull().default(60),
+    /** Zoom / Google Meet link. Never sent to the browser until the session opens. */
+    joinUrl: text("join_url").notNull(),
+    recordingUrl: text("recording_url"),
+    access: webinarAccessEnum("access").notNull().default("everyone"),
+    /** Required when access = enrolled. */
+    courseId: uuid("course_id").references(() => courses.id, { onDelete: "set null" }),
+    cancelled: boolean("cancelled").notNull().default(false),
+    createdBy: text("created_by").references(() => profiles.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("webinars_starts_at_idx").on(t.startsAt)],
+);
+
+export const webinarRegistrations = pgTable(
+  "webinar_registrations",
+  {
+    webinarId: uuid("webinar_id")
+      .notNull()
+      .references(() => webinars.id, { onDelete: "cascade" }),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.webinarId, t.profileId] })],
+);
+
 export type Profile = typeof profiles.$inferSelect;
 export type Role = (typeof roleEnum.enumValues)[number];
 export type Scholarship = typeof scholarships.$inferSelect;
@@ -191,3 +333,11 @@ export type ApplicationStatus = (typeof applicationStatusEnum.enumValues)[number
 export type ApplicationDocument = typeof applicationDocuments.$inferSelect;
 export type DocumentStatus = (typeof documentStatusEnum.enumValues)[number];
 export type ApplicationEvent = typeof applicationEvents.$inferSelect;
+export type Course = typeof courses.$inferSelect;
+export type CourseStatus = (typeof courseStatusEnum.enumValues)[number];
+export type Lesson = typeof lessons.$inferSelect;
+export type Enrollment = typeof enrollments.$inferSelect;
+export type EnrollmentStatus = (typeof enrollmentStatusEnum.enumValues)[number];
+export type Certificate = typeof certificates.$inferSelect;
+export type Webinar = typeof webinars.$inferSelect;
+export type WebinarAccess = (typeof webinarAccessEnum.enumValues)[number];

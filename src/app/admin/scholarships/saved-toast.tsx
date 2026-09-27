@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 /** Shows "Saved" once after the form redirects here with ?saved=<title>, then cleans the URL. */
-export function SavedToast({ title }: { title?: string }) {
+export function SavedToast({ title, label = "Scholarship saved" }: { title?: string; label?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const shown = useRef(false);
@@ -13,9 +13,9 @@ export function SavedToast({ title }: { title?: string }) {
   useEffect(() => {
     if (!title || shown.current) return;
     shown.current = true;
-    toast.success("Scholarship saved", { description: title });
+    toast.success(label, { description: title });
     router.replace(pathname, { scroll: false });
-  }, [title, pathname, router]);
+  }, [title, label, pathname, router]);
 
   return null;
 }

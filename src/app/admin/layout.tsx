@@ -3,12 +3,17 @@ import { currentUser } from "@clerk/nextjs/server";
 import { DashboardShell } from "@/components/shell/dashboard-shell";
 import { requireRole } from "@/lib/auth";
 import { countApplicationsNeedingReview } from "@/lib/applications";
+import { countPendingEnrollments } from "@/lib/courses";
 import type { AppNotification } from "@/lib/notifications";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   // Non-admins get a 404, so the back office isn't advertised to students.
   const profile = await requireRole("admin");
-  const [user, needsReview] = await Promise.all([currentUser().then((u) => u!), countApplicationsNeedingReview()]);
+  const [user, needsReview, pendingEnrollments] = await Promise.all([
+    currentUser().then((u) => u!),
+    countApplicationsNeedingReview(),
+    countPendingEnrollments(),
+  ]);
   const notifications: AppNotification[] = needsReview
     ? [
         {
@@ -23,12 +28,24 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         },
       ]
     : [];
+  if (pendingEnrollments) {
+    notifications.push({
+      id: "pending-enrollments",
+      kind: "in-review",
+      title: `${pendingEnrollments} enrollment request${pendingEnrollments === 1 ? "" : "s"} to confirm`,
+      body: "Students asked to join paid courses. Confirm once payment is received.",
+      href: "/admin/courses",
+      cta: "Open courses",
+      actionRequired: true,
+      time: "now",
+    });
+  }
 
   return (
     <DashboardShell
       area="admin"
       notifications={notifications}
-      navBadges={{ "/admin/applicants": needsReview }}
+      navBadges={{ "/admin/applicants": needsReview, "/admin/courses": pendingEnrollments }}
       notificationsHref="/admin/applicants"
       user={{
         firstName: user.firstName,
