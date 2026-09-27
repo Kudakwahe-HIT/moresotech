@@ -8,5 +8,13 @@ export default defineConfig({
   dbCredentials: { url: process.env.DATABASE_URL! },
   // Only manage our own tables; leave Neon Auth's schema and the legacy `users` table alone.
   schemaFilter: ["public"],
-  tablesFilter: ["profiles", "scholarships", "saved_scholarships"],
+  tablesFilter: [
+    "profiles",
+    "scholarships",
+    "saved_scholarships",
+    "applications",
+    "application_documents",
+    "application_events",
+    "document_access_log",
+  ],
 });

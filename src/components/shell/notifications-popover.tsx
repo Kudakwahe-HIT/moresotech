@@ -7,7 +7,13 @@ import { Bell, ChevronRight } from "lucide-react";
 import type { AppNotification } from "@/lib/notifications";
 import { NotificationIcon } from "./notification-icon";
 
-export function NotificationsPopover({ notifications }: { notifications: AppNotification[] }) {
+export function NotificationsPopover({
+  notifications,
+  viewAllHref = "/dashboard/notifications",
+}: {
+  notifications: AppNotification[];
+  viewAllHref?: string;
+}) {
   const [open, setOpen] = useState(false);
   const actionCount = notifications.filter((n) => n.actionRequired).length;
 
@@ -45,7 +51,7 @@ export function NotificationsPopover({ notifications }: { notifications: AppNoti
                     onClick={() => setOpen(false)}
                     className="flex gap-3.5 px-5 py-4 transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
                   >
-                    <NotificationIcon kind={n.id} />
+                    <NotificationIcon kind={n.kind} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-semibold text-slate-900">{n.title}</p>
@@ -60,7 +66,7 @@ export function NotificationsPopover({ notifications }: { notifications: AppNoti
             </ul>
 
             <Link
-              href="/dashboard/notifications"
+              href={viewAllHref}
               onClick={() => setOpen(false)}
               className="flex items-center justify-center gap-1 border-t border-slate-100 px-5 py-3.5 text-sm font-semibold text-brand-blue transition-colors hover:bg-slate-50 hover:text-brand-blue-dark"
             >

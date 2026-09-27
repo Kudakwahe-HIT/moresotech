@@ -13,7 +13,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <DashboardShell
       area="student"
-      notifications={getNotifications(user)}
+      notifications={await getNotifications(user, profile.id)}
       user={{
         firstName: user.firstName,
         name: user.fullName ?? email,

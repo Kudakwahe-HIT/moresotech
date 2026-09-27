@@ -7,6 +7,7 @@ import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { Archive, Eye, EyeOff, LoaderCircle, MoreHorizontal, Pencil, Star, StarOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ScholarshipStatus } from "@/db/schema";
+import type { ActionResult } from "@/lib/action-result";
 import { deleteScholarship, setScholarshipFeatured, setScholarshipStatus } from "./actions";
 
 type Props = { id: string; title: string; slug: string; status: ScholarshipStatus; featured: boolean };
@@ -15,11 +16,12 @@ export function RowActions({ id, title, slug, status, featured }: Props) {
   const [pending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  function run(action: () => Promise<void>, success: string) {
+  function run(action: () => Promise<ActionResult | void>, success: string) {
     startTransition(async () => {
       try {
-        await action();
-        toast.success(success, { description: title });
+        const result = await action();
+        if (result?.error) toast.error(result.error);
+        else toast.success(success, { description: title });
       } catch {
         toast.error("Something went wrong. Please try again.");
       }

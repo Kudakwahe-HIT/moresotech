@@ -1,4 +1,16 @@
-import { BookOpen, Camera, MailWarning, PartyPopper, type LucideIcon } from "lucide-react";
+import {
+  Camera,
+  CircleCheck,
+  CircleX,
+  GraduationCap,
+  Hourglass,
+  MailWarning,
+  MessageSquareWarning,
+  PartyPopper,
+  RotateCcw,
+  Send,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NotificationKind } from "@/lib/notifications";
 
@@ -6,7 +18,13 @@ const ICONS: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   welcome: { icon: PartyPopper, tone: "bg-brand-orange/10 text-brand-orange-dark" },
   "verify-email": { icon: MailWarning, tone: "bg-amber-500/10 text-amber-600" },
   "add-photo": { icon: Camera, tone: "bg-violet-500/10 text-violet-600" },
-  "first-course": { icon: BookOpen, tone: "bg-brand-blue/10 text-brand-blue" },
+  "first-application": { icon: GraduationCap, tone: "bg-brand-blue/10 text-brand-blue" },
+  revision: { icon: RotateCcw, tone: "bg-red-500/10 text-red-600" },
+  changes: { icon: MessageSquareWarning, tone: "bg-brand-orange/10 text-brand-orange-dark" },
+  ready: { icon: Send, tone: "bg-emerald-500/10 text-emerald-600" },
+  "in-review": { icon: Hourglass, tone: "bg-amber-500/10 text-amber-600" },
+  approved: { icon: CircleCheck, tone: "bg-emerald-500/10 text-emerald-600" },
+  rejected: { icon: CircleX, tone: "bg-slate-500/10 text-slate-600" },
 };
 
 export function NotificationIcon({ kind, size = "md" }: { kind: NotificationKind; size?: "md" | "lg" }) {

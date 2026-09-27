@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { currentUser } from "@clerk/nextjs/server";
 import {
+  ArrowRight,
   Award,
   BookOpen,
   CalendarClock,
@@ -18,6 +19,11 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { DeadlineChip } from "@/components/scholarships/deadline-chip";
 import { listClosingSoon } from "@/lib/scholarships";
+import { eq } from "drizzle-orm";
+import { applications } from "@/db/schema";
+import { requireRole } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { getNotifications } from "@/lib/notifications";
 import { CalendarCard } from "@/components/shell/calendar-card";
 import { UserAvatar } from "@/components/shell/user-avatar";
 
@@ -36,7 +42,18 @@ const WEEK = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 export default async function DashboardPage() {
   // proxy.ts guarantees a signed-in user here.
-  const [user, closingSoon] = await Promise.all([currentUser().then((u) => u!), listClosingSoon(4)]);
+  const [user, closingSoon, profile] = await Promise.all([
+    currentUser().then((u) => u!),
+    listClosingSoon(4),
+    requireRole("student", "instructor", "admin"),
+  ]);
+  // The single most important thing to do right now (brief: "one primary action per login").
+  const [notifications, [firstApplication]] = await Promise.all([
+    getNotifications(user, profile.id),
+    db.select({ id: applications.id }).from(applications).where(eq(applications.profileId, profile.id)).limit(1),
+  ]);
+  const nextStep = notifications.find((n) => n.actionRequired);
+  const hasApplication = Boolean(firstApplication);
 
   const email = user.primaryEmailAddress?.emailAddress ?? "";
   const emailVerified = user.primaryEmailAddress?.verification?.status === "verified";
@@ -60,7 +77,7 @@ export default async function DashboardPage() {
     { label: "Create your account", done: true },
     { label: "Verify your email address", done: emailVerified },
     { label: "Add a profile photo", done: user.hasImage },
-    { label: "Enroll in your first course", done: false },
+    { label: "Start your first application", done: hasApplication },
   ];
   const completed = checklist.filter((item) => item.done).length;
   const percent = Math.round((completed / checklist.length) * 100);
@@ -69,6 +86,26 @@ export default async function DashboardPage() {
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       {/* Main column */}
       <div className="min-w-0 space-y-6">
+        {nextStep && (
+          <section
+            aria-label="Your next step"
+            className="relative flex flex-col gap-4 overflow-hidden rounded-3xl bg-gradient-to-r from-brand-orange to-[#f79a45] p-5 text-white shadow-[0_16px_40px_-16px_rgba(245,130,32,0.7)] sm:flex-row sm:items-center sm:p-6"
+          >
+            <div aria-hidden className="pointer-events-none absolute -right-10 -top-16 size-48 rounded-full bg-white/15 blur-2xl" />
+            <div className="relative min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/80">Your next step</p>
+              <h2 className="mt-1 text-lg font-bold leading-snug sm:text-xl">{nextStep.title}</h2>
+              <p className="mt-1 line-clamp-2 text-sm text-white/90">{nextStep.body}</p>
+            </div>
+            <Link
+              href={nextStep.href}
+              className="relative inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-white px-5 text-sm font-bold text-brand-orange-dark shadow-sm transition hover:bg-orange-50 sm:self-center"
+            >
+              {nextStep.cta} <ArrowRight className="size-4" />
+            </Link>
+          </section>
+        )}
+
         <section aria-labelledby="progress-heading">
           <SectionTitle id="progress-heading">Your progress</SectionTitle>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

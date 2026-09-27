@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { scholarships, type ScholarshipStatus } from "@/db/schema";
+import { applications, scholarships, type ScholarshipStatus } from "@/db/schema";
 import { assertRole } from "@/lib/auth";
+import { runAction, UserFacingError, type ActionResult } from "@/lib/action-result";
 import { uniqueSlug } from "@/lib/scholarships";
 import {
   scholarshipFormSchema,
@@ -72,8 +73,13 @@ export async function setScholarshipFeatured(id: string, featured: boolean) {
   refresh();
 }
 
-export async function deleteScholarship(id: string) {
-  await assertRole("admin");
-  await db.delete(scholarships).where(eq(scholarships.id, id));
-  refresh();
+export async function deleteScholarship(id: string): Promise<ActionResult> {
+  return runAction(async () => {
+    await assertRole("admin");
+    const [used] = await db.select({ id: applications.id }).from(applications).where(eq(applications.scholarshipId, id)).limit(1);
+    // Students' applications must never lose their scholarship; close it instead.
+    if (used) throw new UserFacingError("Students have applied to this scholarship. Mark it as closed instead of deleting it.");
+    await db.delete(scholarships).where(eq(scholarships.id, id));
+    refresh();
+  });
 }

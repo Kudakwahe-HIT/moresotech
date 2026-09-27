@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { ArrowRight, Inbox } from "lucide-react";
+import { requireRole } from "@/lib/auth";
 import { NotificationIcon } from "@/components/shell/notification-icon";
 import { getNotifications, type AppNotification } from "@/lib/notifications";
 
@@ -11,8 +12,8 @@ export const metadata: Metadata = {
 
 export default async function NotificationsPage() {
   // proxy.ts guarantees a signed-in user here.
-  const user = (await currentUser())!;
-  const notifications = getNotifications(user);
+  const [user, profile] = await Promise.all([currentUser().then((u) => u!), requireRole("student", "instructor", "admin")]);
+  const notifications = await getNotifications(user, profile.id);
   const actionNeeded = notifications.filter((n) => n.actionRequired);
   const earlier = notifications.filter((n) => !n.actionRequired);
 
@@ -51,7 +52,7 @@ function NotificationGroup({ title, items }: { title: string; items: AppNotifica
         {items.map((n) => (
           <li key={n.id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
             <div className="flex min-w-0 flex-1 gap-4">
-              <NotificationIcon kind={n.id} size="lg" />
+              <NotificationIcon kind={n.kind} size="lg" />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-slate-900">{n.title}</p>

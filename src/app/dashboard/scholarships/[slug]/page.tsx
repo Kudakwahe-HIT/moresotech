@@ -18,7 +18,11 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import { and, eq } from "drizzle-orm";
+import { StartApplicationButton } from "@/components/applications/action-buttons";
 import { DeadlineChip } from "@/components/scholarships/deadline-chip";
+import { applications } from "@/db/schema";
+import { db } from "@/lib/db";
 import { SaveButton } from "@/components/scholarships/save-button";
 import { requireRole } from "@/lib/auth";
 import { deadlineInfo, formatDate, FUNDING_LABELS, LEVEL_LABELS } from "@/lib/scholarship-labels";
@@ -38,6 +42,11 @@ export default async function ScholarshipPage({ params }: PageProps<"/dashboard/
   if (!s) notFound();
 
   const closed = deadlineInfo(s.deadline).tone === "closed";
+  const [existingApplication] = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(and(eq(applications.profileId, profile.id), eq(applications.scholarshipId, s.id)))
+    .limit(1);
   const requirements = [
     ...s.requiredDocuments.map((label) => ({ label, kind: "document" as const })),
     ...s.requiredCertificates.map((label) => ({ label, kind: "certificate" as const })),
@@ -76,14 +85,13 @@ export default async function ScholarshipPage({ params }: PageProps<"/dashboard/
           <p className="mt-4 max-w-2xl text-[0.95rem] leading-relaxed text-slate-300">{s.summary}</p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <span
-              aria-disabled
-              title="Applications open in the next release"
-              className="inline-flex h-11 cursor-not-allowed items-center gap-2 rounded-xl bg-brand-orange/40 px-5 text-sm font-semibold text-white/80"
-            >
-              <ClipboardCheck className="size-4" />
-              {closed ? "Applications closed" : "Start application · coming soon"}
-            </span>
+            {closed && !existingApplication ? (
+              <span className="inline-flex h-11 cursor-not-allowed items-center gap-2 rounded-xl bg-white/10 px-5 text-sm font-semibold text-white/60">
+                <ClipboardCheck className="size-4" /> Applications closed
+              </span>
+            ) : (
+              <StartApplicationButton scholarshipId={s.id} existingId={existingApplication?.id} />
+            )}
             <SaveButton scholarshipId={s.id} title={s.title} saved={s.saved} variant="full" onDark />
             {s.applyUrl && (
               <a
@@ -137,7 +145,7 @@ export default async function ScholarshipPage({ params }: PageProps<"/dashboard/
           {requirements.length > 0 && (
             <div className="rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
               <h3 className="text-base font-bold text-slate-900">What you&apos;ll need</h3>
-              <p className="mt-1 text-xs text-slate-500">Your Document Vault will track each of these for you.</p>
+              <p className="mt-1 text-xs text-slate-500">Start an application and we&apos;ll track each of these for you.</p>
               <ul className="mt-4 space-y-2.5">
                 {requirements.map((r) => (
                   <li key={`${r.kind}-${r.label}`} className="flex items-start gap-3 text-sm text-slate-700">

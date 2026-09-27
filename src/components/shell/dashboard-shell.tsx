@@ -26,11 +26,17 @@ export function DashboardShell({
   area,
   user,
   notifications,
+  navBadges,
+  notificationsHref = "/dashboard/notifications",
   children,
 }: {
   area: ShellArea;
   user: ShellUser;
   notifications: AppNotification[];
+  /** Counts shown beside sidebar items, keyed by href. Defaults to the notification count. */
+  navBadges?: Record<string, number>;
+  /** Where the bell panel's "View all" goes. */
+  notificationsHref?: string;
   children: ReactNode;
 }) {
   const actionCount = notifications.filter((n) => n.actionRequired).length;
@@ -53,13 +59,13 @@ export function DashboardShell({
         area={area}
         pathname={pathname}
         user={user}
-        badges={{ "/dashboard/notifications": actionCount }}
+        badges={navBadges ?? { "/dashboard/notifications": actionCount }}
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
       />
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-6">
-        <TopBar area={area} user={user} notifications={notifications} onOpenMenu={() => setMenuOpen(true)} />
+        <TopBar area={area} user={user} notifications={notifications} notificationsHref={notificationsHref} onOpenMenu={() => setMenuOpen(true)} />
         <main className="flex-1 px-4 pb-10 pt-2 sm:px-6 lg:px-0 lg:pr-2">{children}</main>
       </div>
     </div>
@@ -167,11 +173,13 @@ function TopBar({
   area,
   user,
   notifications,
+  notificationsHref,
   onOpenMenu,
 }: {
   area: ShellArea;
   user: ShellUser;
   notifications: AppNotification[];
+  notificationsHref: string;
   onOpenMenu: () => void;
 }) {
   return (
@@ -217,7 +225,7 @@ function TopBar({
         />
       </form>
 
-      <NotificationsPopover notifications={notifications} />
+      <NotificationsPopover notifications={notifications} viewAllHref={notificationsHref} />
       <ProfileMenu area={area} user={user} />
     </header>
   );
