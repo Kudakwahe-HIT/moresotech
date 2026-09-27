@@ -12,10 +12,23 @@ import {
   type ReactNode,
 } from "react";
 import { CircleAlert, LoaderCircle, Save } from "lucide-react";
+import { Dropdown, type DropdownOption } from "@/components/forms/dropdown";
 import type { Scholarship } from "@/db/schema";
 import { FUNDING_LABELS, LEVEL_LABELS } from "@/lib/scholarship-labels";
 import type { ScholarshipFormState, ScholarshipFormValues } from "@/lib/validation/scholarship";
 import { cn } from "@/lib/utils";
+
+const FUNDING_HINTS: Record<string, string> = {
+  full: "Tuition, living costs and usually flights",
+  partial: "Covers part of the costs",
+  tuition: "Tuition fees only",
+  stipend: "Monthly allowance, no tuition",
+};
+const FUNDING_OPTIONS: DropdownOption[] = Object.entries(FUNDING_LABELS).map(([value, label]) => ({
+  value,
+  label,
+  description: FUNDING_HINTS[value],
+}));
 
 type FormAction = (prev: ScholarshipFormState, formData: FormData) => Promise<ScholarshipFormState>;
 type FieldName = keyof ScholarshipFormValues;
@@ -61,28 +74,22 @@ export function ScholarshipForm({ action, initial }: { action: FormAction; initi
 
       <Section title="Funding & level">
         <Field name="level" label="Study level" error={errors.level}>
-          <select name="level" defaultValue={initial?.level ?? ""} className={input(errors.level)}>
-            <option value="" disabled>
-              Choose a level
-            </option>
-            {Object.entries(LEVEL_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <Dropdown
+            name="level"
+            defaultValue={initial?.level}
+            placeholder="Choose a level"
+            invalid={Boolean(errors.level)}
+            options={Object.entries(LEVEL_LABELS).map(([value, label]) => ({ value, label }))}
+          />
         </Field>
         <Field name="fundingType" label="Funding type" error={errors.fundingType}>
-          <select name="fundingType" defaultValue={initial?.fundingType ?? ""} className={input(errors.fundingType)}>
-            <option value="" disabled>
-              Choose funding
-            </option>
-            {Object.entries(FUNDING_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <Dropdown
+            name="fundingType"
+            defaultValue={initial?.fundingType}
+            placeholder="Choose funding"
+            invalid={Boolean(errors.fundingType)}
+            options={FUNDING_OPTIONS}
+          />
         </Field>
         <Field name="amount" label="What's covered" hint="Shown in the key facts" error={errors.amount} className="sm:col-span-2">
           <input name="amount" defaultValue={initial?.amount ?? ""} placeholder="e.g. Full tuition, airfare and a monthly living allowance" className={input(errors.amount)} />

@@ -2,9 +2,9 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
-import { LoaderCircle, Search, X } from "lucide-react";
+import { ArrowUpDown, CircleDollarSign, GraduationCap, LoaderCircle, Search, X } from "lucide-react";
+import { Dropdown } from "@/components/forms/dropdown";
 import { FUNDING_LABELS, LEVEL_LABELS } from "@/lib/scholarship-labels";
-import { cn } from "@/lib/utils";
 
 type Filters = { q?: string; level?: string; funding?: string; sort?: string; view?: string };
 
@@ -53,20 +53,39 @@ export function FilterBar({ filters }: { filters: Filters }) {
         />
       </form>
 
-      <div className="grid grid-cols-3 gap-2 xl:flex">
-        <Select label="Level" value={filters.level ?? ""} onChange={(level) => apply({ level })} options={LEVEL_LABELS} allLabel="All levels" />
-        <Select
-          label="Funding"
-          value={filters.funding ?? ""}
-          onChange={(funding) => apply({ funding })}
-          options={FUNDING_LABELS}
-          allLabel="Any funding"
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 xl:flex">
+        <Dropdown
+          variant="soft"
+          aria-label="Study level"
+          icon={<GraduationCap className="size-4" />}
+          value={filters.level ?? ALL}
+          active={Boolean(filters.level)}
+          onValueChange={(level) => apply({ level: level === ALL ? "" : level })}
+          options={[{ value: ALL, label: "All levels" }, ...toOptions(LEVEL_LABELS)]}
+          className="xl:w-44"
         />
-        <Select
-          label="Sort"
+        <Dropdown
+          variant="soft"
+          aria-label="Funding"
+          icon={<CircleDollarSign className="size-4" />}
+          value={filters.funding ?? ALL}
+          active={Boolean(filters.funding)}
+          onValueChange={(funding) => apply({ funding: funding === ALL ? "" : funding })}
+          options={[{ value: ALL, label: "Any funding" }, ...toOptions(FUNDING_LABELS)]}
+          className="xl:w-44"
+        />
+        <Dropdown
+          variant="soft"
+          aria-label="Sort by"
+          icon={<ArrowUpDown className="size-4" />}
           value={filters.sort ?? "deadline"}
-          onChange={(sort) => apply({ sort })}
-          options={{ deadline: "Deadline soonest", newest: "Newest", title: "A–Z" }}
+          onValueChange={(sort) => apply({ sort })}
+          options={[
+            { value: "deadline", label: "Deadline soonest" },
+            { value: "newest", label: "Newest first" },
+            { value: "title", label: "A–Z" },
+          ]}
+          className="xl:w-52"
         />
       </div>
 
@@ -86,40 +105,7 @@ export function FilterBar({ filters }: { filters: Filters }) {
   );
 }
 
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-  allLabel,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Record<string, string>;
-  allLabel?: string;
-}) {
-  return (
-    <label className="relative">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(
-          "h-11 w-full cursor-pointer appearance-none rounded-2xl bg-slate-50 pl-4 pr-9 text-sm font-medium text-slate-700 outline-none ring-1 ring-transparent transition focus:bg-white focus:ring-brand-blue/30 xl:w-auto",
-          value && allLabel && "bg-brand-blue/5 text-brand-blue",
-        )}
-      >
-        {allLabel && <option value="">{allLabel}</option>}
-        {Object.entries(options).map(([key, text]) => (
-          <option key={key} value={key}>
-            {text}
-          </option>
-        ))}
-      </select>
-      <svg aria-hidden viewBox="0 0 20 20" className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400">
-        <path fill="currentColor" d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4z" />
-      </svg>
-    </label>
-  );
-}
+/** Base UI treats "" as "nothing selected", so the "All" option needs a real value. */
+const ALL = "all";
+
+const toOptions = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
