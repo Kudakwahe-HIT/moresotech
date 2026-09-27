@@ -4,9 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Bell, Menu, Search, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { AppNotification } from "../_lib/notifications";
 import { NAV_ITEMS } from "./nav-items";
+import { NotificationsPopover } from "./notifications-popover";
+import { ProfileMenu } from "./profile-menu";
 import { SignOutButton } from "./sign-out-button";
 import { UserAvatar } from "./user-avatar";
 
@@ -18,7 +21,16 @@ export type ShellUser = {
   hasImage: boolean;
 };
 
-export function DashboardShell({ user, children }: { user: ShellUser; children: ReactNode }) {
+export function DashboardShell({
+  user,
+  notifications,
+  children,
+}: {
+  user: ShellUser;
+  notifications: AppNotification[];
+  children: ReactNode;
+}) {
+  const actionCount = notifications.filter((n) => n.actionRequired).length;
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -34,10 +46,16 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
         )}
       />
 
-      <Sidebar pathname={pathname} user={user} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <Sidebar
+        pathname={pathname}
+        user={user}
+        badges={{ "/dashboard/notifications": actionCount }}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-6">
-        <TopBar user={user} onOpenMenu={() => setMenuOpen(true)} />
+        <TopBar user={user} notifications={notifications} onOpenMenu={() => setMenuOpen(true)} />
         <main className="flex-1 px-4 pb-10 pt-2 sm:px-6 lg:px-0 lg:pr-2">{children}</main>
       </div>
     </div>
@@ -47,11 +65,14 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
 function Sidebar({
   pathname,
   user,
+  badges,
   open,
   onClose,
 }: {
   pathname: string;
   user: ShellUser;
+  /** Small count shown next to a nav item, keyed by href. */
+  badges: Record<string, number>;
   open: boolean;
   onClose: () => void;
 }) {
@@ -98,7 +119,17 @@ function Sidebar({
               )}
             >
               <item.icon className={cn("size-[18px]", active ? "text-white" : "text-slate-500 group-hover:text-white")} />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {!!badges[item.href] && (
+                <span
+                  className={cn(
+                    "flex size-5 items-center justify-center rounded-full text-[0.65rem] font-bold",
+                    active ? "bg-white text-brand-orange-dark" : "bg-brand-orange/90 text-white",
+                  )}
+                >
+                  {badges[item.href]}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -119,7 +150,15 @@ function Sidebar({
   );
 }
 
-function TopBar({ user, onOpenMenu }: { user: ShellUser; onOpenMenu: () => void }) {
+function TopBar({
+  user,
+  notifications,
+  onOpenMenu,
+}: {
+  user: ShellUser;
+  notifications: AppNotification[];
+  onOpenMenu: () => void;
+}) {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 bg-[#f4f6f9]/85 px-4 py-4 backdrop-blur-md sm:px-6 lg:static lg:bg-transparent lg:px-0 lg:pb-6 lg:pr-2 lg:pt-3 lg:backdrop-blur-none">
       <button
@@ -148,21 +187,8 @@ function TopBar({ user, onOpenMenu }: { user: ShellUser; onOpenMenu: () => void 
         />
       </label>
 
-      <Link
-        href="/dashboard/notifications"
-        aria-label="Notifications"
-        className="flex size-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:text-slate-900"
-      >
-        <Bell className="size-[18px]" />
-      </Link>
-
-      <UserAvatar
-        imageUrl={user.imageUrl}
-        hasImage={user.hasImage}
-        name={user.name}
-        size={44}
-        className="ring-2 ring-white shadow-sm"
-      />
+      <NotificationsPopover notifications={notifications} />
+      <ProfileMenu user={user} />
     </header>
   );
 }

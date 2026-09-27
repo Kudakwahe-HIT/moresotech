@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { currentUser } from "@clerk/nextjs/server";
 import { DashboardShell } from "./_components/dashboard-shell";
+import { getNotifications } from "./_lib/notifications";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   // proxy.ts guarantees a signed-in user here.
@@ -9,6 +10,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <DashboardShell
+      notifications={getNotifications(user)}
       user={{
         firstName: user.firstName,
         name: user.fullName ?? email,
