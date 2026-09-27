@@ -111,7 +111,7 @@ export function ForgotPasswordForm() {
 
         <FormAlert message={alert} />
 
-        <form noValidate onSubmit={handleEmail} className="space-y-4 short:space-y-3">
+        <form method="post" noValidate onSubmit={handleEmail} className="space-y-4 short:space-y-3">
           <TextField
             label="Email address"
             icon={Mail}
@@ -146,7 +146,7 @@ export function ForgotPasswordForm() {
 
       <FormAlert message={alert} />
 
-      <form noValidate onSubmit={handleReset} className="space-y-4 short:space-y-3">
+      <form method="post" noValidate onSubmit={handleReset} className="space-y-4 short:space-y-3">
         <TextField
           label="Reset code"
           icon={KeyRound}

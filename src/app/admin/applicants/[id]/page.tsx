@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { count, inArray } from "drizzle-orm";
-import { ArrowLeft, CalendarDays, ExternalLink, Mail, MessageSquareQuote, ScrollText } from "lucide-react";
+import { ArrowLeft, CalendarDays, ExternalLink, GraduationCap, Mail, MessageCircle, MessageSquareQuote, ScrollText } from "lucide-react";
 import { ApplicationStatusBadge } from "@/components/applications/badges";
 import { ProgressRing } from "@/components/applications/progress-ring";
 import { RequirementList } from "@/components/applications/requirement-list";
@@ -14,6 +14,9 @@ import { documentAccessLog } from "@/db/schema";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/application-rules";
 import { getApplicationForAdmin } from "@/lib/applications";
+import { LEVEL_LABELS } from "@/lib/scholarship-labels";
+import { getUserSettings } from "@/lib/settings";
+import { KOREAN_LEVELS, whatsappLink } from "@/lib/settings-rules";
 import { DecisionPanel, DocumentReviewButtons } from "../review-controls";
 
 export const metadata: Metadata = {
@@ -28,9 +31,19 @@ export default async function ApplicantPage({ params }: PageProps<"/admin/applic
   const { application: app, scholarship: s, student, progress, events, documents } = data;
   const name = [student.firstName, student.lastName].filter(Boolean).join(" ") || student.email;
   const docIds = documents.map((d) => d.id);
-  const [views] = docIds.length
-    ? await db.select({ n: count() }).from(documentAccessLog).where(inArray(documentAccessLog.documentId, docIds))
-    : [{ n: 0 }];
+  const [[views], goals] = await Promise.all([
+    docIds.length ? db.select({ n: count() }).from(documentAccessLog).where(inArray(documentAccessLog.documentId, docIds)) : [{ n: 0 }],
+    getUserSettings(student.id),
+  ]);
+  const goalRows = goals
+    ? ([
+        ["Wants to study", goals.targetLevel ? LEVEL_LABELS[goals.targetLevel] : null],
+        ["Start", goals.targetIntake],
+        ["Field", goals.fieldOfStudy],
+        ["Korean", goals.koreanLevel ? KOREAN_LEVELS[goals.koreanLevel] : null],
+        ["Lives in", goals.country],
+      ] as const).filter(([, value]) => value)
+    : [];
 
   return (
     <div className="space-y-6">
@@ -122,13 +135,38 @@ export default async function ApplicantPage({ params }: PageProps<"/admin/applic
               <Row icon={<ScrollText className="size-4" />} label="Document views logged" value={String(views.n)} />
             </dl>
           </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+            <h3 className="text-base font-bold text-slate-900">Student&apos;s goals</h3>
+            <p className="mb-3 mt-0.5 text-xs text-slate-500">From the student&apos;s settings.</p>
+            {goalRows.length || goals?.phone ? (
+              <dl className="divide-y divide-slate-100 text-sm">
+                {goalRows.map(([label, value]) => (
+                  <Row key={label} icon={<GraduationCap className="size-4" />} label={label} value={value!} />
+                ))}
+                {goals?.phone && (
+                  <Row
+                    icon={<MessageCircle className="size-4" />}
+                    label="WhatsApp"
+                    value={
+                      <a href={whatsappLink(goals.phone)} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-700 hover:underline">
+                        {goals.phone}
+                      </a>
+                    }
+                  />
+                )}
+              </dl>
+            ) : (
+              <p className="text-sm text-slate-500">Not filled in yet.</p>
+            )}
+          </section>
         </aside>
       </div>
     </div>
   );
 }
 
-function Row({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function Row({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2.5">
       <dt className="flex items-center gap-2 text-slate-500">

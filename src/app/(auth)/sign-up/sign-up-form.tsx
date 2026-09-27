@@ -162,7 +162,7 @@ export function SignUpForm() {
 
         <FormAlert message={alert} />
 
-        <form noValidate onSubmit={handleVerify} className="space-y-4 short:space-y-3">
+        <form method="post" noValidate onSubmit={handleVerify} className="space-y-4 short:space-y-3">
           <TextField
             label="Verification code"
             icon={KeyRound}
@@ -221,7 +221,7 @@ export function SignUpForm() {
 
       <FormAlert message={alert} />
 
-      <form noValidate onSubmit={handleDetails} className="space-y-4 short:space-y-3">
+      <form method="post" noValidate onSubmit={handleDetails} className="space-y-4 short:space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="First name"

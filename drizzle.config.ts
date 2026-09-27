@@ -10,6 +10,8 @@ export default defineConfig({
   schemaFilter: ["public"],
   tablesFilter: [
     "profiles",
+    "user_settings",
+    "site_settings",
     "scholarships",
     "saved_scholarships",
     "applications",

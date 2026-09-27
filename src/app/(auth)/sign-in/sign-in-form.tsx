@@ -131,7 +131,7 @@ export function SignInForm({ welcome }: { welcome: boolean }) {
 
         <FormAlert message={alert} />
 
-        <form noValidate onSubmit={handleVerify} className="space-y-4 short:space-y-3">
+        <form method="post" noValidate onSubmit={handleVerify} className="space-y-4 short:space-y-3">
           <TextField
             label="Verification code"
             icon={KeyRound}
@@ -179,7 +179,7 @@ export function SignInForm({ welcome }: { welcome: boolean }) {
 
       <FormAlert message={alert} />
 
-      <form noValidate onSubmit={handleCredentials} className="space-y-4 short:space-y-3">
+      <form method="post" noValidate onSubmit={handleCredentials} className="space-y-4 short:space-y-3">
         <TextField
           label="Email address"
           icon={Mail}

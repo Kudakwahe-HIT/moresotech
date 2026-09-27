@@ -17,6 +17,10 @@ type Props = {
   /** URL to preview the current picture. */
   defaultUrl?: string | null;
   error?: string;
+  label?: string;
+  hint?: string;
+  /** Storage folder; must be one the upload route allows. */
+  prefix?: string;
 };
 
 /** Resizes to at most COVER_MAX_WIDTH wide and re-encodes as WebP (JPEG where WebP isn't supported). */
@@ -37,10 +41,10 @@ async function shrink(file: File): Promise<Blob> {
 }
 
 /**
- * Course cover picture: click or drop an image, see it straight away, replace or remove it.
+ * Picture field (course covers, landing hero): click or drop an image, see it straight away, replace or remove it.
  * The picture uploads immediately; the course only uses it once the form is saved.
  */
-export function CoverImageInput({ name, defaultPath, defaultUrl, error }: Props) {
+export function CoverImageInput({ name, defaultPath, defaultUrl, error, label = "Cover picture", hint = "Shown on the website and course cards", prefix = COVER_PREFIX }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [path, setPath] = useState(defaultPath ?? "");
   const [preview, setPreview] = useState(defaultUrl ?? null);
@@ -60,14 +64,14 @@ export function CoverImageInput({ name, defaultPath, defaultUrl, error }: Props)
     try {
       const image = await shrink(file);
       const ext = image.type === "image/webp" ? "webp" : "jpg";
-      const blob = await upload(`${COVER_PREFIX}cover.${ext}`, image, {
+      const blob = await upload(`${prefix}picture.${ext}`, image, {
         access: "private",
         contentType: image.type,
         handleUploadUrl: "/api/courses/cover-upload",
         onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
       });
       setPath(blob.pathname);
-      toast.success("Picture ready", { description: "Save the course to use it." });
+      toast.success("Picture ready", { description: "Save to start using it." });
     } catch (err) {
       URL.revokeObjectURL(local);
       setPreview(previous);
@@ -94,7 +98,7 @@ export function CoverImageInput({ name, defaultPath, defaultUrl, error }: Props)
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-sm font-semibold text-slate-700">
-          Cover picture <span className="ml-1 font-normal text-slate-400">Shown on the website and course cards</span>
+          {label} {hint && <span className="ml-1 font-normal text-slate-400">{hint}</span>}
         </span>
       </div>
 
@@ -125,7 +129,7 @@ export function CoverImageInput({ name, defaultPath, defaultUrl, error }: Props)
         {preview ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- local blob: previews can't go through next/image */}
-            <img src={preview} alt="Course cover preview" className={cn("size-full object-cover transition", busy && "opacity-60")} />
+            <img src={preview} alt={`${label} preview`} className={cn("size-full object-cover transition", busy && "opacity-60")} />
             <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-black/60 to-transparent p-3 pt-10">
               <button
                 type="button"
@@ -139,7 +143,7 @@ export function CoverImageInput({ name, defaultPath, defaultUrl, error }: Props)
                 type="button"
                 disabled={busy}
                 onClick={removePicture}
-                aria-label="Remove cover picture"
+                aria-label={`Remove ${label.toLowerCase()}`}
                 className="inline-flex size-9 items-center justify-center rounded-xl bg-white/90 text-red-600 backdrop-blur transition hover:bg-white disabled:opacity-60"
               >
                 <Trash2 className="size-4" />

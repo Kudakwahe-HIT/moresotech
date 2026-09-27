@@ -1,6 +1,8 @@
 import "server-only";
 import type { User } from "@clerk/nextjs/server";
 import { listStudentApplications } from "@/lib/applications";
+import { getUserSettings } from "@/lib/settings";
+import { mutedKinds } from "@/lib/settings-rules";
 
 export type NotificationKind =
   | "welcome"
@@ -31,10 +33,11 @@ export type AppNotification = {
 
 /**
  * Built from real data: the user's applications (revisions, decisions, ready-to-submit) plus
- * onboarding reminders. Action items come first. Emails for these arrive in a later phase.
+ * onboarding reminders. Action items come first. Groups the student muted in Settings are left out
+ * (only the groups defined in settings-rules; the rest always show). Emails for these arrive in a later phase.
  */
 export async function getNotifications(user: User, profileId: string): Promise<AppNotification[]> {
-  const applications = await listStudentApplications(profileId);
+  const [applications, settings] = await Promise.all([listStudentApplications(profileId), getUserSettings(profileId)]);
   const items: AppNotification[] = [];
 
   for (const { application: app, scholarship: s, progress } of applications) {
@@ -70,8 +73,11 @@ export async function getNotifications(user: User, profileId: string): Promise<A
   }
   items.push({ id: "welcome", kind: "welcome", title: "Welcome to MoreSo Tech!", body: "Your account is ready. Uplift, equip and become through innovative learning.", href: "/dashboard", cta: "Open dashboard", actionRequired: false, time: joined });
 
+  const hidden = mutedKinds(settings?.mutedNotifications ?? []);
+  // Only the groups listed in settings-rules can be muted; everything else always shows.
+  const shown = items.filter((n) => !hidden.has(n.kind));
   // Things to do first, then updates.
-  return [...items.filter((n) => n.actionRequired), ...items.filter((n) => !n.actionRequired)];
+  return [...shown.filter((n) => n.actionRequired), ...shown.filter((n) => !n.actionRequired)];
 }
 
 function relativeTime(timestamp: number): string {

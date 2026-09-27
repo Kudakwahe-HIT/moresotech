@@ -384,3 +384,39 @@ export type Webinar = typeof webinars.$inferSelect;
 export type WebinarAccess = (typeof webinarAccessEnum.enumValues)[number];
 export type Payment = typeof payments.$inferSelect;
 export type PaymentStatus = (typeof paymentStatusEnum.enumValues)[number];
+
+/** A student's own preferences and study goals (one row per user, created on first save). */
+export const userSettings = pgTable("user_settings", {
+  profileId: text("profile_id")
+    .primaryKey()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  targetLevel: scholarshipLevelEnum("target_level"),
+  /** Free text, e.g. "Spring 2027". */
+  targetIntake: text("target_intake"),
+  fieldOfStudy: text("field_of_study"),
+  /** none | beginner | topik1 … topik6 */
+  koreanLevel: text("korean_level"),
+  country: text("country"),
+  /** WhatsApp / mobile number, so the team can reach the student about an application. */
+  phone: text("phone"),
+  /** In-app notification groups the user has switched off (things needing action can't be muted). */
+  mutedNotifications: text("muted_notifications").array().notNull().default([]),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Platform-wide settings managed by admins. Always a single row with id = 1. */
+export const siteSettings = pgTable("site_settings", {
+  id: integer("id").primaryKey().default(1),
+  supportEmail: text("support_email"),
+  supportWhatsapp: text("support_whatsapp"),
+  /** Private Blob pathname of the landing page hero picture (served via /api/site/hero). */
+  heroImage: text("hero_image"),
+  announcementActive: boolean("announcement_active").notNull().default(false),
+  announcementText: text("announcement_text"),
+  announcementLink: text("announcement_link"),
+  updatedBy: text("updated_by").references(() => profiles.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type SiteSettings = typeof siteSettings.$inferSelect;

@@ -24,8 +24,11 @@ import {
 import { CourseCover } from "@/components/learning/course-cover";
 import { LocalTime } from "@/components/learning/time";
 import { VerifyForm } from "@/components/landing/verify-form";
+import { AnnouncementBar } from "@/components/shell/announcement-bar";
 import { getProfile, homeFor } from "@/lib/auth";
 import { getLandingData } from "@/lib/landing";
+import { activeAnnouncement, getSiteSettings } from "@/lib/settings";
+import { siteHeroUrl, whatsappLink } from "@/lib/settings-rules";
 import { COURSE_CATEGORIES, formatDuration, formatPrice } from "@/lib/learning-rules";
 import { FUNDING_LABELS, LEVEL_LABELS, deadlineInfo } from "@/lib/scholarship-labels";
 import { cn } from "@/lib/utils";
@@ -91,7 +94,8 @@ export default async function Home() {
   const profile = await getProfile();
   if (profile) redirect(homeFor(profile.role));
 
-  const { stats, featuredScholarships, featuredCourses, upcomingSessions } = await getLandingData();
+  const [{ stats, featuredScholarships, featuredCourses, upcomingSessions }, site] = await Promise.all([getLandingData(), getSiteSettings()]);
+  const announcement = activeAnnouncement(site);
   const statItems = [
     { value: stats.scholarships, label: stats.scholarships === 1 ? "Open scholarship" : "Open scholarships" },
     { value: stats.courses, label: stats.courses === 1 ? "Course" : "Courses" },
@@ -102,6 +106,7 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-full flex-col bg-white text-slate-900">
+      {announcement && <AnnouncementBar {...announcement} className="rounded-none px-4 py-2.5 sm:justify-center [&>p]:flex-none" />}
       <SiteHeader />
 
       <main className="flex-1">
@@ -143,7 +148,7 @@ export default async function Home() {
               </ul>
             </div>
 
-            <HeroVisual course={heroCourse} />
+            <HeroVisual heroUrl={siteHeroUrl(site.heroImage)} course={heroCourse} />
           </div>
         </section>
 
@@ -365,7 +370,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <SiteFooter />
+      <SiteFooter supportEmail={site.supportEmail} supportWhatsapp={site.supportWhatsapp} />
     </div>
   );
 }
@@ -406,11 +411,13 @@ function SiteHeader() {
 }
 
 /** Illustration with floating cards that preview what the student dashboard does. */
-function HeroVisual({ course }: { course?: { id: string; title: string; category: string; coverImage: string | null } }) {
+function HeroVisual({ heroUrl, course }: { heroUrl: string | null; course?: { id: string; title: string; category: string; coverImage: string | null } }) {
   return (
     <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
       <div className="relative aspect-[5/4] overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-blue/[0.08] via-white to-brand-orange/[0.08] ring-1 ring-slate-200/70">
-        {course ? (
+        {heroUrl ? (
+          <Image src={heroUrl} alt="" fill unoptimized preload sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
+        ) : course ? (
           <CourseCover course={course} preload sizes="(min-width: 1024px) 45vw, 100vw" className="absolute inset-0" />
         ) : (
           <Image src="/illustrations/sign-up.svg" alt="" fill preload sizes="(min-width: 1024px) 45vw, 100vw" className="object-contain p-8" />
@@ -482,13 +489,27 @@ function Underline() {
   );
 }
 
-function SiteFooter() {
+function SiteFooter({ supportEmail, supportWhatsapp }: { supportEmail: string | null; supportWhatsapp: string | null }) {
   return (
     <footer className="border-t border-slate-100 bg-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:px-8">
         <div>
           <Image src="/moresotech-logo.png" alt="MoreSo Tech" width={865} height={288} className="h-9 w-auto" />
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">Helping students prepare for, apply to and win scholarships to study in South Korea.</p>
+          {(supportEmail || supportWhatsapp) && (
+            <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              {supportEmail && (
+                <a href={`mailto:${supportEmail}`} className="font-semibold text-slate-700 hover:text-brand-blue">
+                  {supportEmail}
+                </a>
+              )}
+              {supportWhatsapp && (
+                <a href={whatsappLink(supportWhatsapp)} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-700 hover:text-emerald-800">
+                  WhatsApp {supportWhatsapp}
+                </a>
+              )}
+            </p>
+          )}
         </div>
         <div>
           <p className="text-sm font-bold text-[#0f1b2d]">Check a MoreSo Tech certificate</p>
