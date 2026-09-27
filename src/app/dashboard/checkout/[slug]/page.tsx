@@ -7,7 +7,7 @@ import { courses, enrollments, lessons } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { COURSE_CATEGORIES, formatPrice, hasCourseAccess } from "@/lib/learning-rules";
-import { listPaymentMethods, paymentsEnabled } from "@/lib/payments";
+import { listPaymentMethods, paymentFlow, paymentsEnabled } from "@/lib/payments";
 import { CheckoutForm, type CheckoutMethod } from "./checkout-form";
 
 export const metadata: Metadata = {
@@ -40,15 +40,19 @@ export default async function CheckoutPage({ params }: PageProps<"/dashboard/che
   let unavailable = !paymentsEnabled();
   if (!unavailable) {
     try {
-      methods = (await listPaymentMethods(course.currency, course.priceCents / 100)).map((m) => ({
-        code: m.code,
-        name: m.name,
-        description: m.description ?? null,
-        redirect: Boolean(m.redirectRequired),
-        fields: (m.requiredFields ?? [])
-          .filter((f) => f.fieldType !== "FILE")
-          .map((f) => ({ name: f.name, label: f.displayName ?? f.name, type: f.fieldType ?? "TEXT", optional: Boolean(f.optional) })),
-      }));
+      methods = (await listPaymentMethods(course.currency, course.priceCents / 100)).map((m) => {
+        const redirect = paymentFlow(m) === "redirect";
+        return {
+          code: m.code,
+          name: m.name,
+          description: m.description ?? null,
+          redirect,
+          // Hosted-page methods ask for nothing here; phone-prompt methods ask only for the number.
+          fields: redirect
+            ? []
+            : (m.requiredFields ?? []).map((f) => ({ name: f.name, label: f.displayName ?? "Mobile number", type: "TEXT", optional: false })),
+        };
+      });
       unavailable = methods.length === 0;
     } catch (error) {
       console.error("Couldn't load Pesepay payment methods", error);

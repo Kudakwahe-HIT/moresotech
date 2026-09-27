@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 
 export default async function TeachOverviewPage() {
   const profile = await requireRole("instructor", "admin");
-  const [user, courses, sessions] = await Promise.all([currentUser(), listCoursesForInstructor(profile.id), listWebinarsForInstructor(profile.id)]);
+  const [user, courses, allSessions] = await Promise.all([currentUser(), listCoursesForInstructor(profile.id), listWebinarsForInstructor(profile.id)]);
+  const sessions = allSessions.filter((s) => !s.webinar.cancelled);
 
   const learners = courses.reduce((n, c) => n + c.learners, 0);
   const completions = courses.reduce((n, c) => n + c.completed, 0);

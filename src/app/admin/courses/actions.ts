@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { del } from "@vercel/blob";
 import { and, asc, eq, gt, lt, desc, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { certificates, courses, enrollments, lessons, profiles } from "@/db/schema";
@@ -59,6 +60,23 @@ async function uniqueCourseSlug(title: string, ignoreId?: string) {
   return `${base}-${Date.now().toString(36)}`;
 }
 
+/** Removes a replaced cover from storage, unless another course still uses the same file. */
+async function deleteOldCover(previous: string | null | undefined, next: string | null) {
+  if (!previous || previous === next) return;
+  const [stillUsed] = await db.select({ id: courses.id }).from(courses).where(eq(courses.coverImage, previous)).limit(1);
+  if (stillUsed) return;
+  try {
+    await del(previous);
+  } catch (error) {
+    console.error("Couldn't delete old course cover", error);
+  }
+}
+
+async function currentCover(id: string) {
+  const [row] = await db.select({ coverImage: courses.coverImage }).from(courses).where(eq(courses.id, id)).limit(1);
+  return row?.coverImage;
+}
+
 function toCourseRow(data: CourseFormValues) {
   const { price, ...rest } = data;
   return { ...rest, priceCents: price };
@@ -80,10 +98,12 @@ export async function updateCourse(id: string, _prev: FormState<CourseFormValues
   await assertRole("admin");
   const parsed = courseFormSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fieldErrorsFrom(parsed.error.issues);
+  const previousCover = await currentCover(id);
   await db
     .update(courses)
     .set({ ...toCourseRow(parsed.data), slug: await uniqueCourseSlug(parsed.data.title, id), updatedAt: new Date() })
     .where(eq(courses.id, id));
+  await deleteOldCover(previousCover, parsed.data.coverImage);
   refresh();
   redirect(`/admin/courses/${id}?saved=1`);
 }
@@ -93,12 +113,14 @@ export async function deleteCourse(id: string): Promise<ActionResult> {
     await assertRole("admin");
     const [issued] = await db.select({ id: certificates.id }).from(certificates).where(eq(certificates.courseId, id)).limit(1);
     if (issued) throw new UserFacingError("Certificates have been issued for this course. Archive it instead of deleting it.");
+    const previousCover = await currentCover(id);
     await db.delete(courses).where(eq(courses.id, id));
+    await deleteOldCover(previousCover, null);
     refresh();
   });
 }
 
-/** Teaching content only (subtitle, description, outcomes). Price, status and assignment stay with admins. */
+/** Teaching content only (subtitle, description, outcomes, cover). Price, status and assignment stay with admins. */
 export async function updateCourseContent(
   id: string,
   _prev: FormState<CourseContentValues>,
@@ -107,7 +129,9 @@ export async function updateCourseContent(
   await assertCourseEditor(id);
   const parsed = courseContentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fieldErrorsFrom(parsed.error.issues);
+  const previousCover = await currentCover(id);
   await db.update(courses).set({ ...parsed.data, updatedAt: new Date() }).where(eq(courses.id, id));
+  await deleteOldCover(previousCover, parsed.data.coverImage);
   refresh();
   return { status: "idle", message: "saved" };
 }

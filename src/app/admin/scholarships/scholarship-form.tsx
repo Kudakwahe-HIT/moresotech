@@ -13,6 +13,7 @@ import {
 } from "react";
 import { CircleAlert, LoaderCircle, Save } from "lucide-react";
 import { Dropdown, type DropdownOption } from "@/components/forms/dropdown";
+import { ListInput } from "@/components/forms/list-input";
 import type { Scholarship } from "@/db/schema";
 import { FUNDING_LABELS, LEVEL_LABELS } from "@/lib/scholarship-labels";
 import type { ScholarshipFormState, ScholarshipFormValues } from "@/lib/validation/scholarship";
@@ -127,11 +128,44 @@ export function ScholarshipForm({ action, initial }: { action: FormAction; initi
         </Field>
       </Section>
 
-      <Section title="Details" description="One item per line. These become checklists for students.">
-        <ListField name="eligibility" label="Eligibility" initial={initial?.eligibility} placeholder={"Citizen of an eligible country\nUnder 25 years old on 1 March"} error={errors.eligibility} />
-        <ListField name="benefits" label="Benefits" initial={initial?.benefits} placeholder={"Full tuition\nMonthly living allowance"} error={errors.benefits} />
-        <ListField name="requiredDocuments" label="Required documents" initial={initial?.requiredDocuments} placeholder={"Passport copy\nApostilled high school transcript"} error={errors.requiredDocuments} />
-        <ListField name="requiredCertificates" label="Required certificates" initial={initial?.requiredCertificates} placeholder={"TOPIK Level 3\nIELTS 5.5"} error={errors.requiredCertificates} />
+      <Section title="Details" description="Add each item separately. These become checklists for students.">
+        <ListInput
+          name="eligibility"
+          label="Eligibility"
+          defaultValue={initial?.eligibility}
+          placeholder="Add an eligibility rule"
+          suggestions={["Citizen of an eligible country", "Under 25 on 1 March", "High school diploma"]}
+          error={errors.eligibility}
+          max={30}
+        />
+        <ListInput
+          name="benefits"
+          label="Benefits"
+          variant="check"
+          defaultValue={initial?.benefits}
+          placeholder="Add a benefit"
+          suggestions={["Full tuition", "Monthly living allowance", "Return airfare"]}
+          error={errors.benefits}
+          max={30}
+        />
+        <ListInput
+          name="requiredDocuments"
+          label="Required documents"
+          defaultValue={initial?.requiredDocuments}
+          placeholder="Add a document students must upload"
+          suggestions={["Passport copy", "Apostilled transcript", "Personal statement"]}
+          error={errors.requiredDocuments}
+          max={30}
+        />
+        <ListInput
+          name="requiredCertificates"
+          label="Required certificates"
+          defaultValue={initial?.requiredCertificates}
+          placeholder="Add a certificate"
+          suggestions={["TOPIK Level 3", "IELTS 5.5"]}
+          error={errors.requiredCertificates}
+          max={30}
+        />
       </Section>
 
       <Section title="Publishing">
@@ -236,26 +270,6 @@ function Field({
         </p>
       )}
     </div>
-  );
-}
-
-function ListField({
-  name,
-  label,
-  initial,
-  placeholder,
-  error,
-}: {
-  name: FieldName;
-  label: string;
-  initial?: string[];
-  placeholder: string;
-  error?: string;
-}) {
-  return (
-    <Field name={name} label={label} error={error}>
-      <textarea name={name} rows={5} defaultValue={initial?.join("\n") ?? ""} placeholder={placeholder} className={input(error, "h-auto py-3 leading-relaxed")} />
-    </Field>
   );
 }
 

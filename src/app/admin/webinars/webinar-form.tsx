@@ -17,7 +17,18 @@ function toLocalInput(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function WebinarForm({ action, initial, courses }: { action: Action; initial?: Webinar; courses: { id: string; title: string }[] }) {
+type Props = {
+  action: Action;
+  initial?: Webinar;
+  courses: { id: string; title: string }[];
+  /** Instructors must link every session to one of their courses; admins only for course-only sessions. */
+  mode?: "admin" | "instructor";
+  cancelHref?: string;
+  defaultHost?: string;
+};
+
+export function WebinarForm({ action, initial, courses, mode = "admin", cancelHref = "/admin/webinars", defaultHost }: Props) {
+  const instructor = mode === "instructor";
   const [state, formAction, pending] = useActionState(action, { status: "idle" });
   const [access, setAccess] = useState(initial?.access ?? "everyone");
   const errors = state.fieldErrors ?? {};
@@ -46,7 +57,7 @@ export function WebinarForm({ action, initial, courses }: { action: Action; init
           <input name="title" defaultValue={initial?.title} placeholder="e.g. How I won the GKS scholarship: Q&A" className={input(errors.title)} />
         </Field>
         <Field label="Host" error={errors.hostName}>
-          <input name="hostName" defaultValue={initial?.hostName} placeholder="e.g. Min-ji Park, GKS 2024 scholar" className={input(errors.hostName)} />
+          <input name="hostName" defaultValue={initial?.hostName ?? defaultHost} placeholder="e.g. Min-ji Park, GKS 2024 scholar" className={input(errors.hostName)} />
         </Field>
         <Field label="Length (minutes)" error={errors.durationMinutes}>
           <input name="durationMinutes" type="number" min={15} max={480} defaultValue={initial?.durationMinutes ?? 60} className={input(errors.durationMinutes)} />
@@ -70,13 +81,24 @@ export function WebinarForm({ action, initial, courses }: { action: Action; init
       </Section>
 
       <Section title="Who can attend">
+        {instructor && (
+          <Field label="Course" hint="Sessions are listed with this course" error={errors.courseId} className="sm:col-span-2">
+            <Dropdown
+              name="courseId"
+              defaultValue={initial?.courseId ?? (courses.length === 1 ? courses[0].id : undefined)}
+              placeholder={courses.length ? "Choose one of your courses" : "No courses assigned to you yet"}
+              invalid={Boolean(errors.courseId)}
+              options={courses.map((c) => ({ value: c.id, label: c.title }))}
+            />
+          </Field>
+        )}
         <fieldset className="sm:col-span-2">
           <legend className="sr-only">Access</legend>
           <div className="grid gap-2 sm:grid-cols-2">
             {(
               [
-                ["everyone", "Everyone", "Any signed-in student can register"],
-                ["enrolled", "Course students only", "Only learners enrolled in a course"],
+                ["everyone", "Everyone", instructor ? "Open taster: any signed-in student can register" : "Any signed-in student can register"],
+                ["enrolled", "Course students only", instructor ? "Only learners enrolled in this course" : "Only learners enrolled in a course"],
               ] as const
             ).map(([value, label, hint]) => (
               <label key={value} className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-brand-blue has-[:checked]:bg-brand-blue/5">
@@ -89,7 +111,7 @@ export function WebinarForm({ action, initial, courses }: { action: Action; init
             ))}
           </div>
         </fieldset>
-        {access === "enrolled" && (
+        {!instructor && access === "enrolled" && (
           <Field label="Course" error={errors.courseId} className="sm:col-span-2">
             <Dropdown
               name="courseId"
@@ -104,12 +126,12 @@ export function WebinarForm({ action, initial, courses }: { action: Action; init
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md lg:left-[296px]">
         <div className="mx-auto flex max-w-4xl items-center justify-end gap-2">
-          <Link href="/admin/webinars" className="h-11 rounded-xl px-4 text-sm font-semibold leading-[2.75rem] text-slate-600 transition hover:bg-slate-100">
+          <Link href={cancelHref} className="h-11 rounded-xl px-4 text-sm font-semibold leading-[2.75rem] text-slate-600 transition hover:bg-slate-100">
             Cancel
           </Link>
           <button type="submit" disabled={pending} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-orange px-5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(245,130,32,0.6)] transition hover:bg-brand-orange-dark disabled:opacity-70">
             {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
-            {initial ? "Save changes" : "Schedule webinar"}
+            {initial ? "Save changes" : instructor ? "Schedule session" : "Schedule webinar"}
           </button>
         </div>
       </div>

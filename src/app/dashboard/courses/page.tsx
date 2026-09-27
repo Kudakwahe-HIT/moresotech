@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Award, BadgeCheck, BookOpen, GraduationCap, ListVideo } from "lucide-react";
+import { Award, BadgeCheck, BookOpen, ListVideo } from "lucide-react";
 import { ProgressRing } from "@/components/applications/progress-ring";
+import { CourseCover } from "@/components/learning/course-cover";
 import { requireRole } from "@/lib/auth";
 import { listCoursesForStudent, listStudentCertificates } from "@/lib/courses";
 import { COURSE_CATEGORIES, ENROLLMENT_STATUS, formatPrice, hasCourseAccess } from "@/lib/learning-rules";
@@ -18,13 +19,6 @@ const TABS = [
   { key: "certificates", label: "Certificates" },
 ] as const;
 
-const CATEGORY_TONES: Record<string, string> = {
-  language: "from-brand-blue to-[#1f7ac4]",
-  test_prep: "from-brand-orange to-[#f7a24f]",
-  documents: "from-emerald-600 to-emerald-400",
-  interview: "from-violet-600 to-violet-400",
-  other: "from-slate-700 to-slate-500",
-};
 
 export default async function CoursesPage({ searchParams }: PageProps<"/dashboard/courses">) {
   const profile = await requireRole("student");
@@ -85,9 +79,9 @@ async function CourseGrid({ profileId, view }: { profileId: string; view: "all" 
             href={`/dashboard/courses/${c.slug}`}
             className="group flex flex-col overflow-hidden rounded-3xl bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)] ring-1 ring-transparent transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-16px_rgba(15,23,42,0.18)] hover:ring-slate-200"
           >
-            <div className={cn("relative flex h-28 items-end bg-gradient-to-br p-4", CATEGORY_TONES[c.category] ?? CATEGORY_TONES.other)}>
-              <GraduationCap aria-hidden className="absolute right-4 top-4 size-14 text-white/20" />
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
+            <div className="relative">
+              <CourseCover course={c} className="aspect-[16/9] transition duration-500 group-hover:scale-[1.02]" />
+              <span className="absolute bottom-3 left-3 rounded-full bg-black/35 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
                 {COURSE_CATEGORIES[c.category] ?? "Course"}
               </span>
             </div>

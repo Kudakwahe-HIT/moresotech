@@ -4,6 +4,7 @@ import { Award, BookOpen, ListVideo, Users } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { listCoursesForInstructor } from "@/lib/courses";
 import { COURSE_CATEGORIES } from "@/lib/learning-rules";
+import { CourseCover } from "@/components/learning/course-cover";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -32,8 +33,10 @@ export default async function TeachCoursesPage() {
             <Link
               key={c.id}
               href={`/teach/courses/${c.id}`}
-              className="flex flex-col rounded-3xl bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04)] ring-1 ring-transparent transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-16px_rgba(15,23,42,0.18)] hover:ring-slate-200"
+              className="flex flex-col overflow-hidden rounded-3xl bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)] ring-1 ring-transparent transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-16px_rgba(15,23,42,0.18)] hover:ring-slate-200"
             >
+              <CourseCover course={c} className="aspect-[16/9]" />
+              <div className="flex flex-1 flex-col p-5">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{COURSE_CATEGORIES[c.category]}</span>
                 <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize", STATUS_TONE[c.status] ?? STATUS_TONE.draft)}>{c.status}</span>
@@ -50,6 +53,7 @@ export default async function TeachCoursesPage() {
                 <span className="inline-flex items-center gap-1">
                   <Award className="size-3.5" /> {completed} completed
                 </span>
+              </div>
               </div>
             </Link>
           ))}

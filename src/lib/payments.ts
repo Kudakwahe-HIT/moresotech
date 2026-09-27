@@ -43,7 +43,20 @@ export async function listPaymentMethods(currency: string, amount: number): Prom
   return methods
     .filter((m) => m.active !== false)
     .filter((m) => (m.minimumAmount == null || amount >= m.minimumAmount) && (m.maximumAmount == null || amount <= m.maximumAmount))
-    .sort((a, b) => Number(Boolean(a.redirectRequired)) - Number(Boolean(b.redirectRequired)));
+    .sort((a, b) => Number(paymentFlow(a) === "redirect") - Number(paymentFlow(b) === "redirect"));
+}
+
+/**
+ * Which flow a method uses on our side. Only phone-prompt methods (e.g. EcoCash, Omari) run on our
+ * own page. Everything else goes to Pesepay's hosted page: cards (so card numbers never touch our
+ * servers, keeping us out of PCI DSS scope) and methods like InnBucks that show a QR code there.
+ */
+export function paymentFlow(method: PaymentMethod): "seamless" | "redirect" {
+  if (method.redirectRequired) return "redirect";
+  const fields = method.requiredFields ?? [];
+  const phoneOnly = fields.length > 0 && fields.every((f) => /phone/i.test(f.name));
+  const touchesCard = fields.some((f) => /card|cvv|security|expiry/i.test(f.name));
+  return phoneOnly && !touchesCard ? "seamless" : "redirect";
 }
 
 /** Pesepay's status → our four states. */

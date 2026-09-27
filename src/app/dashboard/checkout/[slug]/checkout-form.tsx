@@ -114,7 +114,7 @@ export function CheckoutForm({ courseId, methods, amountLabel, email }: { course
             {method.redirect && (
               <p className="flex items-start gap-2 rounded-xl bg-brand-blue/5 px-3.5 py-3 text-sm text-brand-blue">
                 <ExternalLink className="mt-0.5 size-4 shrink-0" />
-                You&apos;ll be taken to Pesepay&apos;s secure page to enter your card details, then brought back here.
+                You&apos;ll finish on Pesepay&apos;s secure page (card details or QR code are entered there, never on MoreSo Tech), then come straight back here.
               </p>
             )}
           </div>

@@ -202,6 +202,8 @@ export const courses = pgTable(
     priceCents: integer("price_cents").notNull().default(0),
     currency: text("currency").notNull().default("USD"),
     outcomes: text("outcomes").array().notNull().default([]),
+    /** Private Blob pathname of the cover picture (served via /api/courses/[id]/cover). */
+    coverImage: text("cover_image"),
     instructorId: text("instructor_id").references(() => profiles.id, { onDelete: "set null" }),
     awardsCertificate: boolean("awards_certificate").notNull().default(true),
     certificateName: text("certificate_name"),

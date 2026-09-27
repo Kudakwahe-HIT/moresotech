@@ -126,7 +126,7 @@ function Sidebar({
         </p>
       )}
 
-      <nav aria-label={AREA_META[area].label} className="mt-6 flex-1 space-y-1 overflow-y-auto">
+      <nav aria-label={AREA_META[area].label} className="sidebar-scroll -mr-3 mt-6 flex-1 space-y-1 overflow-y-auto pr-1.5">
         {NAV_BY_AREA[area].map((item) => {
           const active = item.href === AREA_HOME[area] ? pathname === item.href : pathname.startsWith(item.href);
           return (

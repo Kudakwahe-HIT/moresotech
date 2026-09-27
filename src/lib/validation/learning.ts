@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isCoverPath } from "@/lib/course-cover";
 
 const optionalText = (max: number) =>
   z
@@ -43,6 +44,8 @@ export const courseFormSchema = z.object({
       return Math.round(n * 100);
     }),
   outcomes: lines,
+  /** Blob pathname from the cover uploader; empty = no picture. */
+  coverImage: optionalText(300).refine((v) => v === null || isCoverPath(v), "Upload the picture again."),
   instructorId: optionalText(100),
   awardsCertificate: checkbox,
   certificateName: optionalText(140),
@@ -50,8 +53,8 @@ export const courseFormSchema = z.object({
 });
 export type CourseFormValues = z.infer<typeof courseFormSchema>;
 
-/** The part of a course an assigned instructor may edit. */
-export const courseContentSchema = courseFormSchema.pick({ subtitle: true, description: true, outcomes: true });
+/** The part of a course an assigned instructor may edit (content and cover picture). */
+export const courseContentSchema = courseFormSchema.pick({ subtitle: true, description: true, outcomes: true, coverImage: true });
 export type CourseContentValues = z.infer<typeof courseContentSchema>;
 
 export const lessonFormSchema = z.object({

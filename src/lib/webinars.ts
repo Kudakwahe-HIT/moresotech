@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { courses, enrollments, webinarRegistrations, webinars, type Webinar } from "@/db/schema";
 
@@ -89,8 +89,8 @@ export async function getWebinarById(id: string) {
   return row ?? null;
 }
 
-/** Upcoming sessions linked to an instructor's courses. */
-export async function listWebinarsForInstructor(profileId: string) {
+/** Sessions linked to the courses an instructor teaches (cancelled ones included, so they can restore them). */
+export async function listWebinarsForInstructor(profileId: string, when: "upcoming" | "past" = "upcoming") {
   return db
     .select({
       webinar: webinars,
@@ -99,6 +99,21 @@ export async function listWebinarsForInstructor(profileId: string) {
     })
     .from(webinars)
     .innerJoin(courses, eq(courses.id, webinars.courseId))
-    .where(and(eq(courses.instructorId, profileId), eq(webinars.cancelled, false), gte(webinars.startsAt, sql`now() - interval '3 hours'`)))
-    .orderBy(asc(webinars.startsAt));
+    .where(
+      and(
+        eq(courses.instructorId, profileId),
+        when === "upcoming" ? gte(webinars.startsAt, sql`now() - interval '3 hours'`) : lt(webinars.startsAt, sql`now() - interval '3 hours'`),
+      ),
+    )
+    .orderBy(when === "upcoming" ? asc(webinars.startsAt) : desc(webinars.startsAt))
+    .limit(when === "upcoming" ? 100 : 30);
+}
+
+/** Courses an instructor can schedule sessions for. */
+export async function listTaughtCourses(profileId: string) {
+  return db
+    .select({ id: courses.id, title: courses.title })
+    .from(courses)
+    .where(and(eq(courses.instructorId, profileId), ne(courses.status, "archived")))
+    .orderBy(asc(courses.title));
 }

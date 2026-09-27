@@ -9,7 +9,7 @@ import { isUuid } from "@/lib/applications";
 import { assertRole } from "@/lib/auth";
 import { hasCourseAccess } from "@/lib/learning-rules";
 import { normalizeZwPhone } from "@/lib/payment-rules";
-import { appBaseUrl, applyGatewayResult, getPesepay, listPaymentMethods, syncPayment } from "@/lib/payments";
+import { appBaseUrl, applyGatewayResult, getPesepay, listPaymentMethods, paymentFlow, syncPayment } from "@/lib/payments";
 
 type StartResult = { error: string } | { paymentId: string; redirectUrl?: string };
 
@@ -47,23 +47,22 @@ export async function startCoursePayment(input: { courseId: string; methodCode: 
   }
   if (!method) return { error: "Choose a payment method." };
 
-  // Validate the method's own required fields (e.g. the mobile number for EcoCash).
+  const flow = paymentFlow(method);
+
+  // Only on-page (phone prompt) methods collect anything here: the mobile number. Card and QR
+  // methods collect their details on Pesepay's hosted page, never on ours.
   const requiredFields: Record<string, string> = {};
   let phone: string | null = null;
-  for (const field of method.requiredFields ?? []) {
-    let value = (input.fields[field.name] ?? "").trim();
-    if (!value && !field.optional) return { error: `Enter your ${field.displayName ?? field.name}.` };
-    if (value && /phone/i.test(field.name)) {
-      const normalized = normalizeZwPhone(value);
+  if (flow === "seamless") {
+    for (const field of method.requiredFields ?? []) {
+      const normalized = normalizeZwPhone(input.fields[field.name] ?? "");
       if (!normalized) return { error: "Enter a valid mobile number, e.g. 0771234567." };
-      value = normalized;
+      requiredFields[field.name] = normalized;
       phone = normalized;
     }
-    if (value) requiredFields[field.name] = value.slice(0, 100);
   }
 
   const user = await currentUser();
-  const flow = method.redirectRequired ? "redirect" : "seamless";
   const [payment] = await db
     .insert(payments)
     .values({

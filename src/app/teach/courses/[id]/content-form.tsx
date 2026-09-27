@@ -3,12 +3,15 @@
 import { startTransition, useActionState, useEffect, useRef, type FormEvent, type ReactNode } from "react";
 import { CircleAlert, LoaderCircle, Save } from "lucide-react";
 import { toast } from "sonner";
+import { CoverImageInput } from "@/components/forms/cover-image-input";
+import { ListInput } from "@/components/forms/list-input";
 import type { Course } from "@/db/schema";
+import { coverUrl } from "@/lib/course-cover";
 import type { CourseContentValues, FormState } from "@/lib/validation/learning";
 import { updateCourseContent } from "@/app/admin/courses/actions";
 import { input } from "@/app/admin/courses/course-form";
 
-/** What an instructor can change: subtitle, description, outcomes. */
+/** What an instructor can change: cover picture, subtitle, description, outcomes. */
 export function CourseContentForm({ course }: { course: Course }) {
   const [state, formAction, pending] = useActionState<FormState<CourseContentValues>, FormData>(updateCourseContent.bind(null, course.id), { status: "idle" });
   const errors = state.fieldErrors ?? {};
@@ -36,12 +39,18 @@ export function CourseContentForm({ course }: { course: Course }) {
           <CircleAlert className="size-4" /> {state.message}
         </p>
       )}
+      <CoverImageInput name="coverImage" defaultPath={course.coverImage} defaultUrl={coverUrl(course)} error={errors.coverImage} />
       <Field label="One-line description" error={errors.subtitle}>
         <input name="subtitle" defaultValue={course.subtitle} className={input(errors.subtitle)} />
       </Field>
-      <Field label="What students will learn" hint="One per line" error={errors.outcomes}>
-        <textarea name="outcomes" rows={4} defaultValue={course.outcomes.join("\n")} className={input(errors.outcomes, "h-auto py-3")} />
-      </Field>
+      <ListInput
+        name="outcomes"
+        label="What students will learn"
+        variant="check"
+        defaultValue={course.outcomes}
+        placeholder="Add a learning outcome"
+        error={errors.outcomes}
+      />
       <Field label="Description" error={errors.description}>
         <textarea name="description" rows={6} defaultValue={course.description ?? ""} className={input(errors.description, "h-auto py-3")} />
       </Field>

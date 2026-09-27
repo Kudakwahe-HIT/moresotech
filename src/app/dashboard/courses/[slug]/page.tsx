@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Award, CheckCircle2, Clock, Eye, Hourglass, ListVideo, Lock, PlayCircle, UserRound } from "lucide-react";
 import { ProgressRing } from "@/components/applications/progress-ring";
 import { EnrollButton } from "@/components/learning/buttons";
+import { CourseCover } from "@/components/learning/course-cover";
 import { requireRole } from "@/lib/auth";
 import { getCourseForStudent } from "@/lib/courses";
 import { paymentsEnabled } from "@/lib/payments";
@@ -98,6 +99,9 @@ export default async function CoursePage({ params }: PageProps<"/dashboard/cours
               </p>
             )}
           </div>
+          {c.coverImage && (
+            <CourseCover course={c} preload sizes="(min-width: 1024px) 360px, 100vw" className="aspect-[16/9] w-full shrink-0 rounded-2xl ring-1 ring-white/10 lg:w-[360px]" />
+          )}
           {access && (
             <div className="flex items-center gap-4 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/10">
               <ProgressRing percent={percent} size={80} stroke={7} tone="dark" />

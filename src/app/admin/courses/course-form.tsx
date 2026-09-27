@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { startTransition, useActionState, type FormEvent, type ReactNode } from "react";
 import { CircleAlert, LoaderCircle, Save } from "lucide-react";
+import { CoverImageInput } from "@/components/forms/cover-image-input";
 import { Dropdown } from "@/components/forms/dropdown";
+import { ListInput } from "@/components/forms/list-input";
 import type { Course } from "@/db/schema";
+import { coverUrl } from "@/lib/course-cover";
 import { COURSE_CATEGORIES } from "@/lib/learning-rules";
 import type { CourseFormValues, FormState } from "@/lib/validation/learning";
 import { cn } from "@/lib/utils";
@@ -35,6 +38,9 @@ export function CourseForm({ action, initial, instructors }: { action: Action; i
       )}
 
       <Section title="Course">
+        <div className="sm:col-span-2">
+          <CoverImageInput name="coverImage" defaultPath={initial?.coverImage} defaultUrl={initial ? coverUrl(initial) : null} error={errors.coverImage} />
+        </div>
         <Field label="Title" error={errors.title} className="sm:col-span-2">
           <input name="title" defaultValue={initial?.title} placeholder="e.g. TOPIK Level 3 Preparation" className={input(errors.title)} />
         </Field>
@@ -63,15 +69,17 @@ export function CourseForm({ action, initial, instructors }: { action: Action; i
         <Field label="Description" error={errors.description} className="sm:col-span-2">
           <textarea name="description" rows={5} defaultValue={initial?.description ?? ""} className={input(errors.description, "h-auto py-3")} />
         </Field>
-        <Field label="What students will learn" hint="One per line" error={errors.outcomes} className="sm:col-span-2">
-          <textarea
+        <div className="sm:col-span-2">
+          <ListInput
             name="outcomes"
-            rows={4}
-            defaultValue={initial?.outcomes.join("\n") ?? ""}
-            placeholder={"Read and understand TOPIK II passages\nWrite a 300-word essay in Korean"}
-            className={input(errors.outcomes, "h-auto py-3")}
+            label="What students will learn"
+            variant="check"
+            defaultValue={initial?.outcomes}
+            placeholder="Add a learning outcome"
+            suggestions={["Read TOPIK II passages", "Write a 300-word essay in Korean"]}
+            error={errors.outcomes}
           />
-        </Field>
+        </div>
       </Section>
 
       <Section title="Price & certificate">
