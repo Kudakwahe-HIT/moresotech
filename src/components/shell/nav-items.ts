@@ -10,6 +10,7 @@ import {
   UserCog,
   Users,
   Video,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Applicants", href: "/admin/applicants", icon: Users },
   { label: "Courses & Certs", href: "/admin/courses", icon: BookOpen },
   { label: "Webinars", href: "/admin/webinars", icon: Video },
+  { label: "Payments", href: "/admin/payments", icon: Wallet },
   { label: "Staff & Roles", href: "/admin/staff", icon: UserCog },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];

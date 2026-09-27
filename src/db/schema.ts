@@ -42,6 +42,8 @@ export const enrollmentStatusEnum = pgEnum("enrollment_status", [
   "cancelled",
 ]);
 export const webinarAccessEnum = pgEnum("webinar_access", ["everyone", "enrolled"]);
+/** Our own simplified view of a payment; Pesepay's detailed status is kept alongside. */
+export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "failed", "cancelled"]);
 
 /**
  * One row per Clerk user, created on first visit to the app. Clerk owns sign-in;
@@ -321,6 +323,43 @@ export const webinarRegistrations = pgTable(
   (t) => [primaryKey({ columns: [t.webinarId, t.profileId] })],
 );
 
+/** One row per checkout attempt through Pesepay. */
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "restrict" }),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "restrict" }),
+    /** Charged amount, always taken from the course price on the server. */
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull(),
+    status: paymentStatusEnum("status").notNull().default("pending"),
+    /** Pesepay's own status, e.g. PROCESSING, SUCCESS, INSUFFICIENT_FUNDS. */
+    gatewayStatus: text("gateway_status"),
+    gatewayStatusDescription: text("gateway_status_description"),
+    referenceNumber: text("reference_number").unique(),
+    pollUrl: text("poll_url"),
+    redirectUrl: text("redirect_url"),
+    methodCode: text("method_code").notNull(),
+    methodName: text("method_name").notNull(),
+    /** "seamless" = paid on our page (e.g. EcoCash push); "redirect" = Pesepay's hosted page (cards). */
+    flow: text("flow").notNull(),
+    payerPhone: text("payer_phone"),
+    /** How the Pesepay prompt tells the customer what to do, shown on the processing page. */
+    instructions: text("instructions"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    /** Set once when the course is unlocked, so a payment can never be fulfilled twice. */
+    fulfilledAt: timestamp("fulfilled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("payments_profile_idx").on(t.profileId, t.createdAt), index("payments_status_idx").on(t.status)],
+);
+
 export type Profile = typeof profiles.$inferSelect;
 export type Role = (typeof roleEnum.enumValues)[number];
 export type Scholarship = typeof scholarships.$inferSelect;
@@ -341,3 +380,5 @@ export type EnrollmentStatus = (typeof enrollmentStatusEnum.enumValues)[number];
 export type Certificate = typeof certificates.$inferSelect;
 export type Webinar = typeof webinars.$inferSelect;
 export type WebinarAccess = (typeof webinarAccessEnum.enumValues)[number];
+export type Payment = typeof payments.$inferSelect;
+export type PaymentStatus = (typeof paymentStatusEnum.enumValues)[number];

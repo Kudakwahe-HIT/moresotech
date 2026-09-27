@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { useClerk } from "@clerk/nextjs";
-import { ArrowLeftRight, Bell, LogOut, Settings, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, Bell, LogOut, Receipt, Settings, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import type { ShellUser } from "./dashboard-shell";
 import { AREA_HOME, AREA_META, areasFor, type ShellArea } from "./nav-items";
 import { UserAvatar } from "./user-avatar";
@@ -17,6 +17,7 @@ const LINKS: Record<ShellArea, MenuLink[]> = {
     { label: "My profile", href: "/dashboard/profile", icon: UserRound },
     { label: "Account security", href: "/dashboard/profile#/security", icon: ShieldCheck },
     { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+    { label: "Payments & receipts", href: "/dashboard/payments", icon: Receipt },
     { label: "Settings", href: "/dashboard/settings", icon: Settings },
   ],
   instructor: [

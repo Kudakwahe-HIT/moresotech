@@ -23,5 +23,6 @@ export default defineConfig({
     "certificates",
     "webinars",
     "webinar_registrations",
+    "payments",
   ],
 });

@@ -6,6 +6,7 @@ import { ProgressRing } from "@/components/applications/progress-ring";
 import { EnrollButton } from "@/components/learning/buttons";
 import { requireRole } from "@/lib/auth";
 import { getCourseForStudent } from "@/lib/courses";
+import { paymentsEnabled } from "@/lib/payments";
 import { COURSE_CATEGORIES, formatDuration, formatPrice, hasCourseAccess } from "@/lib/learning-rules";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export default async function CoursePage({ params }: PageProps<"/dashboard/cours
   if (!data) notFound();
 
   const { course: c, enrollment, lessons, completedIds, certificate, percent } = data;
+  const onlinePayments = paymentsEnabled();
   const access = hasCourseAccess(enrollment?.status);
   const pending = enrollment?.status === "pending_payment";
   const instructor = [data.instructorFirst, data.instructorLast].filter(Boolean).join(" ");
@@ -69,6 +71,10 @@ export default async function CoursePage({ params }: PageProps<"/dashboard/cours
                     <PlayCircle className="size-4" /> {completedIds.size ? "Continue learning" : "Start first lesson"}
                   </Link>
                 )
+              ) : c.priceCents > 0 && onlinePayments ? (
+                <Link href={`/dashboard/checkout/${c.slug}`} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-orange px-5 text-sm font-semibold text-white shadow-[0_8px_20px_-6px_rgba(245,130,32,0.55)] transition hover:bg-brand-orange-dark">
+                  <Lock className="size-4" /> Buy now · {formatPrice(c.priceCents, c.currency)}
+                </Link>
               ) : pending ? (
                 <span className="inline-flex h-11 items-center gap-2 rounded-xl bg-amber-400/15 px-5 text-sm font-semibold text-amber-200 ring-1 ring-amber-300/30">
                   <Hourglass className="size-4" /> Request received: we&apos;ll contact you about payment
@@ -82,8 +88,14 @@ export default async function CoursePage({ params }: PageProps<"/dashboard/cours
                 </Link>
               )}
             </div>
-            {!access && !pending && c.priceCents > 0 && (
-              <p className="mt-3 text-xs text-slate-400">Online payment is coming soon. For now, request enrollment and our team will arrange payment with you.</p>
+            {!access && c.priceCents > 0 && (
+              <p className="mt-3 text-xs text-slate-400">
+                {onlinePayments
+                  ? "Pay securely with EcoCash, InnBucks, card and more through Pesepay. Access unlocks instantly."
+                  : pending
+                    ? "Our team will confirm your payment and unlock the course."
+                    : "Request enrollment and our team will arrange payment with you."}
+              </p>
             )}
           </div>
           {access && (
