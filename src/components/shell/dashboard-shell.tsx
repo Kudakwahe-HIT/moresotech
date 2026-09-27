@@ -7,7 +7,7 @@ import { useState, type ReactNode } from "react";
 import { Menu, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/lib/notifications";
-import { AREA_HOME, NAV_BY_AREA, type ShellArea } from "./nav-items";
+import { AREA_HOME, AREA_META, NAV_BY_AREA, type ShellArea } from "./nav-items";
 import { NotificationsPopover } from "./notifications-popover";
 import { ProfileMenu } from "./profile-menu";
 import { SignOutButton } from "./sign-out-button";
@@ -99,7 +99,7 @@ function Sidebar({
       <div className="flex items-center justify-between">
         <Link
           href={AREA_HOME[area]}
-          aria-label={area === "admin" ? "MoreSo Tech back office" : "MoreSo Tech dashboard"}
+          aria-label={`MoreSo Tech ${AREA_META[area].label}`}
           className="flex h-14 flex-1 items-center justify-center rounded-2xl bg-white px-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
         >
           <Image src="/moresotech-logo.png" alt="MoreSo Tech" width={865} height={288} priority className="h-11 w-auto" />
@@ -114,14 +114,19 @@ function Sidebar({
         </button>
       </div>
 
-      {area === "admin" && (
-        <p className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-brand-orange/15 py-2 text-xs font-bold uppercase tracking-[0.16em] text-brand-orange">
-          <span className="size-1.5 rounded-full bg-brand-orange" />
-          Back office
+      {AREA_META[area].badge && (
+        <p
+          className={cn(
+            "mt-4 flex items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold uppercase tracking-[0.16em]",
+            area === "admin" ? "bg-brand-orange/15 text-brand-orange" : "bg-sky-400/15 text-sky-300",
+          )}
+        >
+          <span className={cn("size-1.5 rounded-full", area === "admin" ? "bg-brand-orange" : "bg-sky-300")} />
+          {AREA_META[area].badge}
         </p>
       )}
 
-      <nav aria-label={area === "admin" ? "Back office" : "Dashboard"} className="mt-6 flex-1 space-y-1 overflow-y-auto">
+      <nav aria-label={AREA_META[area].label} className="mt-6 flex-1 space-y-1 overflow-y-auto">
         {NAV_BY_AREA[area].map((item) => {
           const active = item.href === AREA_HOME[area] ? pathname === item.href : pathname.startsWith(item.href);
           return (
@@ -194,8 +199,8 @@ function TopBar({
       </button>
 
       <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-[1.75rem]">
-        {area === "admin" ? (
-          "Back office"
+        {area !== "student" ? (
+          AREA_META[area].label
         ) : (
           <>
             {/* Shorter greeting on phones so the name isn't cut off */}
@@ -207,6 +212,7 @@ function TopBar({
       </h1>
 
       {/* Plain GET form: submitting opens the scholarships list filtered by the query. */}
+      {area !== "instructor" && (
       <form
         role="search"
         action={area === "admin" ? "/admin/scholarships" : "/dashboard/scholarships"}
@@ -224,6 +230,7 @@ function TopBar({
           className="h-11 w-full rounded-full border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
         />
       </form>
+      )}
 
       <NotificationsPopover notifications={notifications} viewAllHref={notificationsHref} />
       <ProfileMenu area={area} user={user} />

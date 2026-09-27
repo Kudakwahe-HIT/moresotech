@@ -9,9 +9,11 @@ import { runAction, UserFacingError, type ActionResult } from "@/lib/action-resu
 import { isUuid } from "@/lib/applications";
 import { assertRole } from "@/lib/auth";
 import {
+  courseContentSchema,
   courseFormSchema,
   fieldErrorsFrom,
   lessonFormSchema,
+  type CourseContentValues,
   type CourseFormValues,
   type FormState,
   type LessonFormValues,
@@ -19,7 +21,25 @@ import {
 
 function refresh() {
   revalidatePath("/admin", "layout");
+  revalidatePath("/teach", "layout");
   revalidatePath("/dashboard", "layout");
+}
+
+/** Admins can edit any course; instructors only the courses assigned to them. */
+async function assertCourseEditor(courseId: string) {
+  const profile = await assertRole("admin", "instructor");
+  if (!isUuid(courseId)) throw new UserFacingError("Course not found");
+  if (profile.role === "admin") return profile;
+  const [course] = await db.select({ instructorId: courses.instructorId }).from(courses).where(eq(courses.id, courseId)).limit(1);
+  if (!course || course.instructorId !== profile.id) throw new Error("Not authorised");
+  return profile;
+}
+
+async function courseIdOfLesson(lessonId: string) {
+  if (!isUuid(lessonId)) throw new UserFacingError("Lesson not found");
+  const [lesson] = await db.select({ courseId: lessons.courseId }).from(lessons).where(eq(lessons.id, lessonId)).limit(1);
+  if (!lesson) throw new UserFacingError("Lesson not found");
+  return lesson.courseId;
 }
 
 async function uniqueCourseSlug(title: string, ignoreId?: string) {
@@ -78,6 +98,20 @@ export async function deleteCourse(id: string): Promise<ActionResult> {
   });
 }
 
+/** Teaching content only (subtitle, description, outcomes). Price, status and assignment stay with admins. */
+export async function updateCourseContent(
+  id: string,
+  _prev: FormState<CourseContentValues>,
+  formData: FormData,
+): Promise<FormState<CourseContentValues>> {
+  await assertCourseEditor(id);
+  const parsed = courseContentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fieldErrorsFrom(parsed.error.issues);
+  await db.update(courses).set({ ...parsed.data, updatedAt: new Date() }).where(eq(courses.id, id));
+  refresh();
+  return { status: "idle", message: "saved" };
+}
+
 // ─── Lessons ───────────────────────────────────────────────────────────────
 
 export async function saveLesson(
@@ -86,8 +120,8 @@ export async function saveLesson(
   _prev: FormState<LessonFormValues>,
   formData: FormData,
 ): Promise<FormState<LessonFormValues>> {
-  await assertRole("admin");
   if (!isUuid(courseId)) return { status: "error", message: "Course not found." };
+  await assertCourseEditor(courseId);
   const parsed = lessonFormSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fieldErrorsFrom(parsed.error.issues);
 
@@ -109,7 +143,7 @@ export async function saveLesson(
 
 export async function moveLesson(lessonId: string, direction: "up" | "down"): Promise<ActionResult> {
   return runAction(async () => {
-    await assertRole("admin");
+    await assertCourseEditor(await courseIdOfLesson(lessonId));
     const [lesson] = await db.select().from(lessons).where(eq(lessons.id, lessonId)).limit(1);
     if (!lesson) throw new UserFacingError("Lesson not found");
     const [neighbour] = await db
@@ -132,7 +166,7 @@ export async function moveLesson(lessonId: string, direction: "up" | "down"): Pr
 
 export async function deleteLesson(lessonId: string): Promise<ActionResult> {
   return runAction(async () => {
-    await assertRole("admin");
+    await assertCourseEditor(await courseIdOfLesson(lessonId));
     await db.delete(lessons).where(eq(lessons.id, lessonId));
     refresh();
   });

@@ -6,7 +6,7 @@ import { Menu } from "@base-ui/react/menu";
 import { useClerk } from "@clerk/nextjs";
 import { ArrowLeftRight, Bell, LogOut, Settings, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import type { ShellUser } from "./dashboard-shell";
-import type { ShellArea } from "./nav-items";
+import { AREA_HOME, AREA_META, areasFor, type ShellArea } from "./nav-items";
 import { UserAvatar } from "./user-avatar";
 
 const LINKS: { label: string; href: string; icon: LucideIcon }[] = [
@@ -47,19 +47,22 @@ export function ProfileMenu({ area, user }: { area: ShellArea; user: ShellUser }
             </div>
 
             <div className="py-1.5">
-              {/* Admins can hop between the student view and the back office */}
-              {user.role === "admin" && (
-                <Menu.LinkItem
-                  render={<Link href={area === "admin" ? "/dashboard" : "/admin"} />}
-                  onClick={() => setOpen(false)}
-                  className={`${itemClass} font-semibold text-brand-blue`}
-                >
-                  <span className="flex items-center gap-3">
-                    <ArrowLeftRight className="size-4 text-brand-blue" />
-                    {area === "admin" ? "Switch to student view" : "Open back office"}
-                  </span>
-                </Menu.LinkItem>
-              )}
+              {/* Staff can hop between the areas their role allows */}
+              {areasFor(user.role)
+                .filter((a) => a !== area)
+                .map((a) => (
+                  <Menu.LinkItem
+                    key={a}
+                    render={<Link href={AREA_HOME[a]} />}
+                    onClick={() => setOpen(false)}
+                    className={`${itemClass} font-semibold text-brand-blue`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <ArrowLeftRight className="size-4 text-brand-blue" />
+                      {a === "student" ? "Switch to student view" : `Open ${AREA_META[a].label.toLowerCase()}`}
+                    </span>
+                  </Menu.LinkItem>
+                ))}
               {LINKS.map((link) => (
                 <Menu.LinkItem
                   key={link.href}

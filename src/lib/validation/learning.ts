@@ -50,6 +50,10 @@ export const courseFormSchema = z.object({
 });
 export type CourseFormValues = z.infer<typeof courseFormSchema>;
 
+/** The part of a course an assigned instructor may edit. */
+export const courseContentSchema = courseFormSchema.pick({ subtitle: true, description: true, outcomes: true });
+export type CourseContentValues = z.infer<typeof courseContentSchema>;
+
 export const lessonFormSchema = z.object({
   title: z.string().trim().min(2, "Give the lesson a title.").max(160),
   summary: optionalText(300),

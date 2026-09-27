@@ -30,9 +30,9 @@ function studentSelect(profileId: string) {
     updatedAt: webinars.updatedAt,
     courseTitle: courses.title,
     courseSlug: courses.slug,
-    registered: sql<boolean>`exists (select 1 from ${webinarRegistrations} r where r.webinar_id = ${webinars.id} and r.profile_id = ${profileId})`,
+    registered: sql<boolean>`exists (select 1 from ${webinarRegistrations} r where r.webinar_id = "webinars"."id" and r.profile_id = ${profileId})`,
     allowed: sql<boolean>`(${webinars.access} = 'everyone' or exists (select 1 from ${enrollments} e where e.course_id = ${webinars.courseId} and e.profile_id = ${profileId} and e.status in ('active', 'completed')))`,
-    registrations: sql<number>`(select count(*)::int from ${webinarRegistrations} r where r.webinar_id = ${webinars.id})`,
+    registrations: sql<number>`(select count(*)::int from ${webinarRegistrations} r where r.webinar_id = "webinars"."id")`,
   };
 }
 
@@ -75,7 +75,7 @@ export async function listWebinarsForAdmin(when: "upcoming" | "past") {
     .select({
       webinar: webinars,
       courseTitle: courses.title,
-      registrations: sql<number>`(select count(*)::int from ${webinarRegistrations} r where r.webinar_id = ${webinars.id})`,
+      registrations: sql<number>`(select count(*)::int from ${webinarRegistrations} r where r.webinar_id = "webinars"."id")`,
     })
     .from(webinars)
     .leftJoin(courses, eq(courses.id, webinars.courseId))
@@ -87,4 +87,18 @@ export async function getWebinarById(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const [row] = await db.select().from(webinars).where(eq(webinars.id, id)).limit(1);
   return row ?? null;
+}
+
+/** Upcoming sessions linked to an instructor's courses. */
+export async function listWebinarsForInstructor(profileId: string) {
+  return db
+    .select({
+      webinar: webinars,
+      courseTitle: courses.title,
+      registrations: sql<number>`(select count(*)::int from ${webinarRegistrations} r where r.webinar_id = "webinars"."id")`,
+    })
+    .from(webinars)
+    .innerJoin(courses, eq(courses.id, webinars.courseId))
+    .where(and(eq(courses.instructorId, profileId), eq(webinars.cancelled, false), gte(webinars.startsAt, sql`now() - interval '3 hours'`)))
+    .orderBy(asc(webinars.startsAt));
 }

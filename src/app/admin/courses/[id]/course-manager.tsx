@@ -178,7 +178,18 @@ function LessonDialog({ courseId, lesson, onClose }: { courseId: string; lesson:
 
 type Learner = { enrollment: Enrollment; student: Profile; completed: number };
 
-export function LearnersPanel({ courseId, learners, lessonCount }: { courseId: string; learners: Learner[]; lessonCount: number }) {
+export function LearnersPanel({
+  courseId,
+  learners,
+  lessonCount,
+  readOnly = false,
+}: {
+  courseId: string;
+  learners: Learner[];
+  lessonCount: number;
+  /** Teaching area: progress only; payments and enrollment stay with admins. */
+  readOnly?: boolean;
+}) {
   const { pending, run } = useRun();
   const [email, setEmail] = useState("");
 
@@ -186,9 +197,12 @@ export function LearnersPanel({ courseId, learners, lessonCount }: { courseId: s
     <section className="overflow-hidden rounded-3xl bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
       <div className="px-6 pb-3 pt-5">
         <h3 className="text-lg font-bold text-slate-900">Learners</h3>
-        <p className="text-sm text-slate-500">Confirm payments for enrollment requests, or add a student directly.</p>
+        <p className="text-sm text-slate-500">
+          {readOnly ? "Everyone taking this course and how far they've got." : "Confirm payments for enrollment requests, or add a student directly."}
+        </p>
       </div>
 
+      {!readOnly && (
       <form
         className="flex gap-2 px-6 pb-4"
         onSubmit={(e) => {
@@ -208,6 +222,7 @@ export function LearnersPanel({ courseId, learners, lessonCount }: { courseId: s
           <UserPlus className="size-4" /> Enroll
         </button>
       </form>
+      )}
 
       {learners.length ? (
         <ul className="divide-y divide-slate-100 border-t border-slate-100">
@@ -226,12 +241,12 @@ export function LearnersPanel({ courseId, learners, lessonCount }: { courseId: s
                   </span>
                 )}
                 <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", s.tone)}>{s.label}</span>
-                {e.status === "pending_payment" && (
+                {!readOnly && e.status === "pending_payment" && (
                   <button type="button" disabled={pending} onClick={() => run(() => setEnrollmentStatus(e.id, "active"), "Payment confirmed: course unlocked")} className="h-8 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
                     Confirm payment
                   </button>
                 )}
-                {e.status !== "cancelled" && e.status !== "completed" && (
+                {!readOnly && e.status !== "cancelled" && e.status !== "completed" && (
                   <button type="button" disabled={pending} onClick={() => run(() => setEnrollmentStatus(e.id, "cancelled"), "Enrollment cancelled")} className="h-8 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60">
                     Cancel
                   </button>

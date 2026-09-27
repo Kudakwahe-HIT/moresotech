@@ -1,6 +1,7 @@
 import {
   Bell,
   BookOpen,
+  Presentation,
   ClipboardCheck,
   FolderLock,
   GraduationCap,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon };
-export type ShellArea = "student" | "admin";
+export type ShellArea = "student" | "instructor" | "admin";
 
 /** Student sidebar. Sections without a page yet show "coming soon". */
 export const STUDENT_NAV: NavItem[] = [
@@ -38,7 +39,28 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export const NAV_BY_AREA: Record<ShellArea, NavItem[]> = { student: STUDENT_NAV, admin: ADMIN_NAV };
+/** Teaching area (instructors, and admins who teach). */
+export const INSTRUCTOR_NAV: NavItem[] = [
+  { label: "Overview", href: "/teach", icon: LayoutGrid },
+  { label: "My courses", href: "/teach/courses", icon: Presentation },
+  { label: "Sessions", href: "/teach/webinars", icon: Video },
+];
+
+export const NAV_BY_AREA: Record<ShellArea, NavItem[]> = { student: STUDENT_NAV, instructor: INSTRUCTOR_NAV, admin: ADMIN_NAV };
+
+/** Label + home for each area, used by the avatar menu's area switcher. */
+export const AREA_META: Record<ShellArea, { label: string; badge?: string }> = {
+  student: { label: "Student view" },
+  instructor: { label: "Teaching", badge: "Instructor" },
+  admin: { label: "Back office", badge: "Back office" },
+};
+
+/** Areas a role may open. */
+export function areasFor(role: "student" | "instructor" | "admin"): ShellArea[] {
+  if (role === "admin") return ["student", "instructor", "admin"];
+  if (role === "instructor") return ["student", "instructor"];
+  return ["student"];
+}
 
 /** Home link for each area; matched exactly so it isn't highlighted on every sub-page. */
-export const AREA_HOME: Record<ShellArea, string> = { student: "/dashboard", admin: "/admin" };
+export const AREA_HOME: Record<ShellArea, string> = { student: "/dashboard", instructor: "/teach", admin: "/admin" };

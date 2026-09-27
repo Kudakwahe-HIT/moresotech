@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { certificates, courses, enrollments, lessonProgress, lessons, profiles } from "@/db/schema";
 import { isUuid } from "@/lib/applications";
 
-const lessonCount = sql<number>`(select count(*)::int from ${lessons} l where l.course_id = ${courses.id})`;
+const lessonCount = sql<number>`(select count(*)::int from ${lessons} l where l.course_id = "courses"."id")`;
 
 /** Published courses with the student's enrollment and progress. */
 export async function listCoursesForStudent(profileId: string, view: "all" | "mine") {
@@ -13,7 +13,7 @@ export async function listCoursesForStudent(profileId: string, view: "all" | "mi
       course: courses,
       lessonCount,
       enrollmentStatus: enrollments.status,
-      completedCount: sql<number>`(select count(*)::int from ${lessonProgress} lp join ${lessons} l on l.id = lp.lesson_id where l.course_id = ${courses.id} and lp.profile_id = ${profileId})`,
+      completedCount: sql<number>`(select count(*)::int from ${lessonProgress} lp join ${lessons} l on l.id = lp.lesson_id where l.course_id = "courses"."id" and lp.profile_id = ${profileId})`,
       instructorFirst: profiles.firstName,
       instructorLast: profiles.lastName,
     })
@@ -98,8 +98,8 @@ export async function listCoursesForAdmin() {
     .select({
       course: courses,
       lessonCount,
-      learners: sql<number>`(select count(*)::int from ${enrollments} e where e.course_id = ${courses.id} and e.status in ('active', 'completed'))`,
-      pending: sql<number>`(select count(*)::int from ${enrollments} e where e.course_id = ${courses.id} and e.status = 'pending_payment')`,
+      learners: sql<number>`(select count(*)::int from ${enrollments} e where e.course_id = "courses"."id" and e.status in ('active', 'completed'))`,
+      pending: sql<number>`(select count(*)::int from ${enrollments} e where e.course_id = "courses"."id" and e.status = 'pending_payment')`,
       instructorFirst: profiles.firstName,
       instructorLast: profiles.lastName,
     })
@@ -139,4 +139,28 @@ export async function listInstructors() {
     .from(profiles)
     .where(inArray(profiles.role, ["instructor", "admin"]))
     .orderBy(asc(profiles.firstName));
+}
+
+// ─── Teaching area ─────────────────────────────────────────────────────────
+
+/** Courses assigned to an instructor, with learner and completion counts. */
+export async function listCoursesForInstructor(profileId: string) {
+  return db
+    .select({
+      course: courses,
+      lessonCount,
+      learners: sql<number>`(select count(*)::int from ${enrollments} e where e.course_id = "courses"."id" and e.status in ('active', 'completed'))`,
+      completed: sql<number>`(select count(*)::int from ${enrollments} e where e.course_id = "courses"."id" and e.status = 'completed')`,
+    })
+    .from(courses)
+    .where(and(eq(courses.instructorId, profileId), sql`${courses.status} <> 'archived'`))
+    .orderBy(desc(courses.updatedAt));
+}
+
+/** A course for the teaching area, only if this instructor teaches it (admins may open any). */
+export async function getCourseForInstructor(id: string, profile: { id: string; role: string }) {
+  const data = await getCourseForAdmin(id);
+  if (!data) return null;
+  if (profile.role !== "admin" && data.course.instructorId !== profile.id) return null;
+  return data;
 }

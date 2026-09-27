@@ -98,7 +98,7 @@ export type AdminApplicationFilter = "needs_review" | ApplicationStatus | undefi
 /** Back-office list. "needs_review" = submitted/under review, or any application with files awaiting review. */
 export async function listApplicationsForAdmin(filter: AdminApplicationFilter, q?: string) {
   const conditions: SQL[] = [];
-  const pendingDocs = sql`exists (select 1 from ${applicationDocuments} d where d.application_id = ${applications.id} and d.status = 'pending' and d.superseded_at is null)`;
+  const pendingDocs = sql`exists (select 1 from ${applicationDocuments} d where d.application_id = "applications"."id" and d.status = 'pending' and d.superseded_at is null)`;
   if (filter === "needs_review") {
     conditions.push(sql`(${applications.status} in ('submitted', 'under_review') or ${pendingDocs})`);
   } else if (filter) {
@@ -132,7 +132,7 @@ export async function countApplicationsNeedingReview() {
     .select({ n: sql<number>`count(*)::int` })
     .from(applications)
     .where(
-      sql`${applications.status} in ('submitted', 'under_review') or exists (select 1 from ${applicationDocuments} d where d.application_id = ${applications.id} and d.status = 'pending' and d.superseded_at is null)`,
+      sql`${applications.status} in ('submitted', 'under_review') or exists (select 1 from ${applicationDocuments} d where d.application_id = "applications"."id" and d.status = 'pending' and d.superseded_at is null)`,
     );
   return row?.n ?? 0;
 }

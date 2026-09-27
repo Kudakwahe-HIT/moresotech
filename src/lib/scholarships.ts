@@ -59,14 +59,14 @@ export async function listPublishedScholarships(filters: ScholarshipFilters, pro
   if (filters.funding) conditions.push(eq(scholarships.fundingType, filters.funding));
   if (filters.savedBy) {
     conditions.push(
-      sql`exists (select 1 from ${savedScholarships} s where s.scholarship_id = ${scholarships.id} and s.profile_id = ${filters.savedBy})`,
+      sql`exists (select 1 from ${savedScholarships} s where s.scholarship_id = "scholarships"."id" and s.profile_id = ${filters.savedBy})`,
     );
   }
 
   const rows = await db
     .select({
       scholarship: scholarships,
-      saved: sql<boolean>`exists (select 1 from ${savedScholarships} s where s.scholarship_id = ${scholarships.id} and s.profile_id = ${profileId})`,
+      saved: sql<boolean>`exists (select 1 from ${savedScholarships} s where s.scholarship_id = "scholarships"."id" and s.profile_id = ${profileId})`,
     })
     .from(scholarships)
     .where(and(...conditions))
@@ -79,7 +79,7 @@ export async function getPublishedScholarship(slug: string, profileId: string) {
   const [row] = await db
     .select({
       scholarship: scholarships,
-      saved: sql<boolean>`exists (select 1 from ${savedScholarships} s where s.scholarship_id = ${scholarships.id} and s.profile_id = ${profileId})`,
+      saved: sql<boolean>`exists (select 1 from ${savedScholarships} s where s.scholarship_id = "scholarships"."id" and s.profile_id = ${profileId})`,
     })
     .from(scholarships)
     .where(and(eq(scholarships.slug, slug), eq(scholarships.status, "published")))
