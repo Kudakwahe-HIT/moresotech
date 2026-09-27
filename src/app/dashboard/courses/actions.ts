@@ -14,7 +14,7 @@ import { hasCourseAccess } from "@/lib/learning-rules";
 /** Free course: instant access. Paid course: a request our team confirms after payment. */
 export async function enrollInCourse(courseId: string): Promise<ActionResult> {
   return runAction(async () => {
-    const profile = await assertRole("student", "instructor", "admin");
+    const profile = await assertRole("student");
     if (!isUuid(courseId)) throw new UserFacingError("Course not found");
     const [course] = await db
       .select()
@@ -49,7 +49,7 @@ export async function enrollInCourse(courseId: string): Promise<ActionResult> {
 export async function completeLesson(lessonId: string): Promise<ActionResult & { certificateCode?: string }> {
   let certificateCode: string | undefined;
   const result = await runAction(async () => {
-    const profile = await assertRole("student", "instructor", "admin");
+    const profile = await assertRole("student");
     if (!isUuid(lessonId)) throw new UserFacingError("Lesson not found");
     const [row] = await db
       .select({ lesson: lessons, course: courses, enrollment: enrollments })

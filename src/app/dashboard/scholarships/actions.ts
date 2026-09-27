@@ -8,7 +8,7 @@ import { assertRole } from "@/lib/auth";
 
 /** Saves or un-saves a published scholarship for the signed-in user. */
 export async function toggleSavedScholarship(scholarshipId: string, save: boolean) {
-  const profile = await assertRole("student", "instructor", "admin");
+  const profile = await assertRole("student");
 
   if (save) {
     const [exists] = await db

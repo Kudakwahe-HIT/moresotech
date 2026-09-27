@@ -55,10 +55,10 @@ export const AREA_META: Record<ShellArea, { label: string; badge?: string }> = {
   admin: { label: "Back office", badge: "Back office" },
 };
 
-/** Areas a role may open. */
+/** Areas a role may open. Admins can switch between the back office and teaching; everyone else has one area. */
 export function areasFor(role: "student" | "instructor" | "admin"): ShellArea[] {
-  if (role === "admin") return ["student", "instructor", "admin"];
-  if (role === "instructor") return ["student", "instructor"];
+  if (role === "admin") return ["admin", "instructor"];
+  if (role === "instructor") return ["instructor"];
   return ["student"];
 }
 

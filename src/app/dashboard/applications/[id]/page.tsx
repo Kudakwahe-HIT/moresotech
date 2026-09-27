@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default async function ApplicationPage({ params }: PageProps<"/dashboard/applications/[id]">) {
   const { id } = await params;
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const data = await getStudentApplication(id, profile.id);
   if (!data) notFound();
 

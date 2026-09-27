@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ScholarshipsPage({ searchParams }: PageProps<"/dashboard/scholarships">) {
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const params = await searchParams;
   const filters = parseFilters(params);
   const view = params.view === "saved" ? "saved" : "all";

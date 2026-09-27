@@ -201,7 +201,7 @@ export function ForgotPasswordForm() {
             </>
           }
           actionLabel="Continue"
-          onAction={() => router.push("/dashboard")}
+          onAction={() => router.push("/")}
         />
       )}
     </>

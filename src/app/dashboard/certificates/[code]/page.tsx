@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default async function CertificatePage({ params }: PageProps<"/dashboard/certificates/[code]">) {
   const { code } = await params;
   const host = (await headers()).get("host") ?? "moresotech";
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const [row] = await db
     .select({ certificate: certificates, courseTitle: courses.title })
     .from(certificates)

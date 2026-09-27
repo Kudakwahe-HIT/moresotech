@@ -234,7 +234,7 @@ export function SignInForm({ welcome }: { welcome: boolean }) {
             </>
           }
           actionLabel="Continue"
-          onAction={() => router.push("/dashboard")}
+          onAction={() => router.push("/")}
         />
       )}
     </>

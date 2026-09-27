@@ -27,7 +27,7 @@ const CATEGORY_TONES: Record<string, string> = {
 };
 
 export default async function CoursesPage({ searchParams }: PageProps<"/dashboard/courses">) {
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const params = await searchParams;
   const tab = TABS.find((t) => t.key === params.tab)?.key ?? "all";
 

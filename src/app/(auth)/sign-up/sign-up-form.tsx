@@ -344,7 +344,7 @@ export function SignUpForm() {
             </>
           }
           actionLabel="Start learning"
-          onAction={() => router.push("/dashboard")}
+          onAction={() => router.push("/")}
         />
       )}
     </>

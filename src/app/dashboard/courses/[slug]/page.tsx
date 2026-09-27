@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function CoursePage({ params }: PageProps<"/dashboard/courses/[slug]">) {
   const { slug } = await params;
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const data = await getCourseForStudent(slug, profile.id);
   if (!data) notFound();
 

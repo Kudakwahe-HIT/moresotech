@@ -5,8 +5,8 @@ import { requireRole } from "@/lib/auth";
 import { getNotifications } from "@/lib/notifications";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  // Every role can use the student area (admins included, to see what students see).
-  const profile = await requireRole("student", "instructor", "admin");
+  // Students only: staff are redirected to their own area (see requireRole).
+  const profile = await requireRole("student");
   const user = (await currentUser())!;
   const email = profile.email;
 

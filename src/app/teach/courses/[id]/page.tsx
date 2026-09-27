@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Award, Eye } from "lucide-react";
+import { ArrowLeft, Award } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { getCourseForInstructor } from "@/lib/courses";
 import { COURSE_CATEGORIES, formatPrice } from "@/lib/learning-rules";
@@ -38,11 +38,6 @@ export default async function TeachCoursePage({ params }: PageProps<"/teach/cour
             </p>
           )}
         </div>
-        {c.status === "published" && (
-          <Link href={`/dashboard/courses/${c.slug}`} className="inline-flex h-10 items-center gap-2 self-start rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:self-auto">
-            <Eye className="size-4" /> View as student
-          </Link>
-        )}
       </section>
 
       <div className="grid gap-6 2xl:grid-cols-2">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Award, Eye, Pencil } from "lucide-react";
+import { ArrowLeft, Award, Pencil } from "lucide-react";
 import { getCourseForAdmin } from "@/lib/courses";
 import { COURSE_CATEGORIES, formatPrice } from "@/lib/learning-rules";
 import { SavedToast } from "../../scholarships/saved-toast";
@@ -39,11 +39,6 @@ export default async function AdminCoursePage({ params, searchParams }: PageProp
           )}
         </div>
         <div className="flex gap-2">
-          {c.status === "published" && (
-            <Link href={`/dashboard/courses/${c.slug}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-              <Eye className="size-4" /> View as student
-            </Link>
-          )}
           <Link href={`/admin/courses/${c.id}/edit`} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#0f1b2d] px-4 text-sm font-semibold text-white transition hover:bg-[#1a2a42]">
             <Pencil className="size-4" /> Edit details
           </Link>

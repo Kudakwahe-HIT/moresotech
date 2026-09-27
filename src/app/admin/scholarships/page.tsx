@@ -126,7 +126,7 @@ export default async function AdminScholarshipsPage({ searchParams }: PageProps<
                       <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", STATUS_STYLES[s.status])}>{STATUS_LABELS[s.status]}</span>
                     </td>
                     <td className="px-4 py-4 text-right">
-                      <RowActions id={s.id} title={s.title} slug={s.slug} status={s.status} featured={s.featured} />
+                      <RowActions id={s.id} title={s.title} status={s.status} featured={s.featured} />
                     </td>
                   </tr>
                 ))}

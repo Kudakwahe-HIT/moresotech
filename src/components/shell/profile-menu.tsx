@@ -9,12 +9,26 @@ import type { ShellUser } from "./dashboard-shell";
 import { AREA_HOME, AREA_META, areasFor, type ShellArea } from "./nav-items";
 import { UserAvatar } from "./user-avatar";
 
-const LINKS: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "My profile", href: "/dashboard/profile", icon: UserRound },
-  { label: "Account security", href: "/dashboard/profile#/security", icon: ShieldCheck },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
-];
+type MenuLink = { label: string; href: string; icon: LucideIcon };
+
+/** Account links live inside each area, so nobody leaves their own area from this menu. */
+const LINKS: Record<ShellArea, MenuLink[]> = {
+  student: [
+    { label: "My profile", href: "/dashboard/profile", icon: UserRound },
+    { label: "Account security", href: "/dashboard/profile#/security", icon: ShieldCheck },
+    { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+    { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  ],
+  instructor: [
+    { label: "My profile", href: "/teach/profile", icon: UserRound },
+    { label: "Account security", href: "/teach/profile#/security", icon: ShieldCheck },
+  ],
+  admin: [
+    { label: "My profile", href: "/admin/profile", icon: UserRound },
+    { label: "Account security", href: "/admin/profile#/security", icon: ShieldCheck },
+    { label: "Settings", href: "/admin/settings", icon: Settings },
+  ],
+};
 
 export function ProfileMenu({ area, user }: { area: ShellArea; user: ShellUser }) {
   const { signOut } = useClerk();
@@ -59,11 +73,11 @@ export function ProfileMenu({ area, user }: { area: ShellArea; user: ShellUser }
                   >
                     <span className="flex items-center gap-3">
                       <ArrowLeftRight className="size-4 text-brand-blue" />
-                      {a === "student" ? "Switch to student view" : `Open ${AREA_META[a].label.toLowerCase()}`}
+                      {`Open ${AREA_META[a].label.toLowerCase()}`}
                     </span>
                   </Menu.LinkItem>
                 ))}
-              {LINKS.map((link) => (
+              {LINKS[area].map((link) => (
                 <Menu.LinkItem
                   key={link.href}
                   render={<Link href={link.href} />}

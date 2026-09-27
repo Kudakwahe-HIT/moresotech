@@ -48,7 +48,7 @@ export default async function DashboardPage() {
   const [user, closingSoon, profile] = await Promise.all([
     currentUser().then((u) => u!),
     listClosingSoon(4),
-    requireRole("student", "instructor", "admin"),
+    requireRole("student"),
   ]);
   // The single most important thing to do right now (brief: "one primary action per login").
   const [notifications, [firstApplication]] = await Promise.all([

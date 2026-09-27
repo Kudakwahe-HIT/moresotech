@@ -11,7 +11,7 @@ import { getWebinarById } from "@/lib/webinars";
 
 export async function setWebinarRegistration(webinarId: string, register: boolean): Promise<ActionResult> {
   return runAction(async () => {
-    const profile = await assertRole("student", "instructor", "admin");
+    const profile = await assertRole("student");
     const webinar = await getWebinarById(webinarId);
     if (!webinar || webinar.cancelled) throw new UserFacingError("This session isn't available.");
 

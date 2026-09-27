@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function NotificationsPage() {
   // proxy.ts guarantees a signed-in user here.
-  const [user, profile] = await Promise.all([currentUser().then((u) => u!), requireRole("student", "instructor", "admin")]);
+  const [user, profile] = await Promise.all([currentUser().then((u) => u!), requireRole("student")]);
   const notifications = await getNotifications(user, profile.id);
   const actionNeeded = notifications.filter((n) => n.actionRequired);
   const earlier = notifications.filter((n) => !n.actionRequired);

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 
 /**
- * Sends users who open an auth page while already signed in to the dashboard.
+ * Sends users who open an auth page while already signed in to their own area.
  * Only checks once, when Clerk first loads, so signing in on the page itself still shows the welcome modal.
  */
 export function useRedirectIfSignedIn(skip = false) {
@@ -16,6 +16,7 @@ export function useRedirectIfSignedIn(skip = false) {
   useEffect(() => {
     if (!isLoaded || checked.current) return;
     checked.current = true;
-    if (isSignedIn && !skip) router.replace("/dashboard");
+    // "/" sends each role to its own area.
+    if (isSignedIn && !skip) router.replace("/");
   }, [isLoaded, isSignedIn, skip, router]);
 }

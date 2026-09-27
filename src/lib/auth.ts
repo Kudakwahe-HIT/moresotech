@@ -30,11 +30,22 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
   return profile;
 });
 
-/** For pages: signed-out users go to sign-in; signed-in users without the role get a 404. */
+/** Where each role lands after signing in. Each role works in its own area. */
+export function homeFor(role: Role) {
+  return role === "admin" ? "/admin" : role === "instructor" ? "/teach" : "/dashboard";
+}
+
+/**
+ * For pages: signed-out users go to sign-in. Staff who open a student page are sent to their
+ * own area; anyone else without the role gets a 404 (so staff areas aren't advertised).
+ */
 export async function requireRole(...roles: Role[]): Promise<Profile> {
   const profile = await getProfile();
   if (!profile) redirect("/sign-in");
-  if (!roles.includes(profile.role)) notFound();
+  if (!roles.includes(profile.role)) {
+    if (roles.includes("student")) redirect(homeFor(profile.role));
+    notFound();
+  }
   return profile;
 }
 

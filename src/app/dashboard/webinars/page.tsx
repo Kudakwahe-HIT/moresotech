@@ -18,7 +18,7 @@ const ERRORS: Record<string, string> = {
 };
 
 export default async function WebinarsPage({ searchParams }: PageProps<"/dashboard/webinars">) {
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const { error } = await searchParams;
   const { upcoming, past } = await listWebinarsForStudent(profile.id);
   const errorMessage = typeof error === "string" ? ERRORS[error] : undefined;

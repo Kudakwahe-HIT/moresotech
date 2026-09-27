@@ -29,7 +29,7 @@ function nextStep(status: ApplicationStatus, progress: ApplicationProgress) {
 }
 
 export default async function ApplicationsPage() {
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const items = await listStudentApplications(profile.id);
 
   return (

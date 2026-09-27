@@ -32,7 +32,7 @@ async function ownApplication(applicationId: string, profileId: string) {
 /** Starts (or reopens) the student's application for a published, still-open scholarship. */
 export async function startApplication(scholarshipId: string): Promise<ActionResult> {
   return runAction(async () => {
-    const profile = await assertRole("student", "instructor", "admin");
+    const profile = await assertRole("student");
     if (!isUuid(scholarshipId)) throw new UserFacingError("Scholarship not found");
 
     const [existing] = await db
@@ -71,7 +71,7 @@ export async function startApplication(scholarshipId: string): Promise<ActionRes
  */
 export async function recordUpload(input: { applicationId: string; requirementIndex: number; pathname: string; fileName: string }): Promise<ActionResult> {
   return runAction(async () => {
-    const profile = await assertRole("student", "instructor", "admin");
+    const profile = await assertRole("student");
     const app = await ownApplication(input.applicationId, profile.id);
     if (!canStudentEdit(app.status)) throw new UserFacingError("This application can't be changed right now.");
 
@@ -115,7 +115,7 @@ export async function recordUpload(input: { applicationId: string; requirementIn
 /** Sends the application for assessment. Only allowed once every requirement is verified. */
 export async function submitApplication(applicationId: string): Promise<ActionResult> {
   return runAction(async () => {
-    const profile = await assertRole("student", "instructor", "admin");
+    const profile = await assertRole("student");
     const app = await ownApplication(applicationId, profile.id);
     if (!canStudentEdit(app.status)) throw new UserFacingError("This application has already been submitted.");
 

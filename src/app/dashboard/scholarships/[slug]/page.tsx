@@ -30,14 +30,14 @@ import { getPublishedScholarship } from "@/lib/scholarships";
 
 export async function generateMetadata({ params }: PageProps<"/dashboard/scholarships/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const s = await getPublishedScholarship(slug, profile.id);
   return { title: s ? `${s.title} | MoreSo Tech` : "Scholarship | MoreSo Tech" };
 }
 
 export default async function ScholarshipPage({ params }: PageProps<"/dashboard/scholarships/[slug]">) {
   const { slug } = await params;
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const s = await getPublishedScholarship(slug, profile.id);
   if (!s) notFound();
 

@@ -10,9 +10,9 @@ import type { ScholarshipStatus } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
 import { deleteScholarship, setScholarshipFeatured, setScholarshipStatus } from "./actions";
 
-type Props = { id: string; title: string; slug: string; status: ScholarshipStatus; featured: boolean };
+type Props = { id: string; title: string; status: ScholarshipStatus; featured: boolean };
 
-export function RowActions({ id, title, slug, status, featured }: Props) {
+export function RowActions({ id, title, status, featured }: Props) {
   const [pending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -44,11 +44,6 @@ export function RowActions({ id, title, slug, status, featured }: Props) {
               <Menu.LinkItem closeOnClick render={<Link href={`/admin/scholarships/${id}/edit`} />} className={item}>
                 <Pencil className="size-4 text-slate-400" /> Edit
               </Menu.LinkItem>
-              {status === "published" && (
-                <Menu.LinkItem closeOnClick render={<Link href={`/dashboard/scholarships/${slug}`} />} className={item}>
-                  <Eye className="size-4 text-slate-400" /> View as student
-                </Menu.LinkItem>
-              )}
               {status !== "published" ? (
                 <Menu.Item className={item} onClick={() => run(() => setScholarshipStatus(id, "published"), "Published")}>
                   <Eye className="size-4 text-emerald-500" /> Publish

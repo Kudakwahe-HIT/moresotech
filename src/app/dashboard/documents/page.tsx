@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DocumentVaultPage() {
-  const profile = await requireRole("student", "instructor", "admin");
+  const profile = await requireRole("student");
   const rows = await listStudentDocuments(profile.id);
   const verified = rows.filter((r) => r.document.status === "verified").length;
 
