@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 import { Lock, Mail, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { OrDivider, PasswordField, SocialButtons, SubmitButton, TextField } from "../_components/form-controls";
+import { signUp, type AuthState } from "../actions";
+import { FormAlert, OrDivider, PasswordField, SocialButtons, SubmitButton, TextField } from "../_components/form-controls";
+import { SuccessModal } from "../_components/success-modal";
 
 type Field = "firstName" | "lastName" | "email" | "password" | "terms";
 type Errors = Partial<Record<Field, string>>;
@@ -27,8 +30,10 @@ const STRENGTH = [
 ];
 
 export function SignUpForm() {
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState<AuthState, FormData>(signUp, { status: "idle" });
   const [errors, setErrors] = useState<Errors>({});
-  const [loading, setLoading] = useState(false);
+  const [alertHidden, setAlertHidden] = useState(false);
   const [password, setPassword] = useState("");
 
   const passed = PASSWORD_RULES.filter((rule) => rule.test(password)).length;
@@ -53,13 +58,21 @@ export function SignUpForm() {
     setErrors(next);
     if (Object.keys(next).length) return;
 
-    setLoading(true);
-    // TODO: call the sign-up endpoint here.
-    setTimeout(() => setLoading(false), 1200);
+    setAlertHidden(false);
+    // Dispatching manually (instead of <form action>) keeps the typed values after a failed attempt.
+    startTransition(() => formAction(data));
   }
 
-  const clear = (field: Field) => () =>
-    errors[field] && setErrors((prev) => ({ ...prev, [field]: undefined }));
+  // Server errors (e.g. email already taken) show until the user edits that field; an explicit
+  // `undefined` in local state hides the server message for that field.
+  const serverErrors = state.status === "error" && !pending ? (state.fieldErrors ?? {}) : {};
+  const shown: Errors = { ...serverErrors, ...errors };
+  const serverError = state.status === "error" && !pending && !alertHidden ? state.message : undefined;
+
+  const clear = (field: Field) => () => {
+    setAlertHidden(true);
+    if (shown[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
 
   return (
     <>
@@ -75,6 +88,8 @@ export function SignUpForm() {
       <SocialButtons action="Sign up" />
       <OrDivider label="or sign up with email" />
 
+      <FormAlert message={serverError} />
+
       <form noValidate onSubmit={handleSubmit} className="space-y-4 short:space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <TextField
@@ -83,7 +98,7 @@ export function SignUpForm() {
             name="firstName"
             autoComplete="given-name"
             placeholder="Jane"
-            error={errors.firstName}
+            error={shown.firstName}
             onChange={clear("firstName")}
           />
           <TextField
@@ -92,7 +107,7 @@ export function SignUpForm() {
             name="lastName"
             autoComplete="family-name"
             placeholder="Doe"
-            error={errors.lastName}
+            error={shown.lastName}
             onChange={clear("lastName")}
           />
         </div>
@@ -104,7 +119,7 @@ export function SignUpForm() {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          error={errors.email}
+          error={shown.email}
           onChange={clear("email")}
         />
 
@@ -116,14 +131,14 @@ export function SignUpForm() {
             autoComplete="new-password"
             placeholder="8+ characters, mixed case, number"
             value={password}
-            error={errors.password}
+            error={shown.password}
             onChange={(e) => {
               setPassword(e.target.value);
               clear("password")();
             }}
           />
 
-          {password && !errors.password && (
+          {password && !shown.password && (
             <div className="flex items-center gap-3 animate-in fade-in" aria-live="polite">
               <div className="grid flex-1 grid-cols-4 gap-1.5">
                 {PASSWORD_RULES.map((_, i) => (
@@ -150,7 +165,7 @@ export function SignUpForm() {
               type="checkbox"
               name="terms"
               onChange={clear("terms")}
-              aria-invalid={!!errors.terms}
+              aria-invalid={!!shown.terms}
               className="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-slate-300 accent-brand-blue"
             />
             <span>
@@ -165,12 +180,12 @@ export function SignUpForm() {
               .
             </span>
           </label>
-          {errors.terms && (
-            <p className="pl-6.5 text-[0.8rem] font-medium text-red-600 animate-in fade-in">{errors.terms}</p>
+          {shown.terms && (
+            <p className="pl-6.5 text-[0.8rem] font-medium text-red-600 animate-in fade-in">{shown.terms}</p>
           )}
         </div>
 
-        <SubmitButton loading={loading}>Create account</SubmitButton>
+        <SubmitButton loading={pending}>Create account</SubmitButton>
       </form>
 
       <p className="mt-6 text-center text-sm text-slate-500 short:mt-4">
@@ -182,6 +197,20 @@ export function SignUpForm() {
           Sign in
         </Link>
       </p>
+
+      {state.status === "success" && (
+        <SuccessModal
+          title={`Welcome, ${state.user.firstName}!`}
+          message={
+            <>
+              Your account for <span className="font-semibold text-slate-700">{state.user.email}</span> is ready.
+              Sign in to start learning.
+            </>
+          }
+          actionLabel="Continue to sign in"
+          onAction={() => router.push("/sign-in")}
+        />
+      )}
     </>
   );
 }
