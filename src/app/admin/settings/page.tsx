@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { currentUser } from "@clerk/nextjs/server";
 import { sql } from "drizzle-orm";
 import { CircleCheck, CircleAlert, Headset, ImageIcon, Megaphone, PlugZap, UserCog, type LucideIcon } from "lucide-react";
-import { SettingsLayout, SettingsRow, SettingsSection, type SettingsNavItem } from "@/components/account/settings-layout";
+import { SettingsLayout, type SettingsNavItem } from "@/components/account/settings-layout";
+import { SettingsRow, SettingsSection } from "@/components/account/settings-section";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { paymentsEnabled } from "@/lib/payments";
@@ -14,13 +16,6 @@ export const metadata: Metadata = {
   title: "Settings | Back office",
 };
 
-const NAV: SettingsNavItem[] = [
-  { id: "support", label: "Support contact", icon: Headset },
-  { id: "announcement", label: "Announcement", icon: Megaphone },
-  { id: "landing", label: "Landing page", icon: ImageIcon },
-  { id: "integrations", label: "Integrations", icon: PlugZap },
-  { id: "account", label: "Your account", icon: UserCog },
-];
 
 type Status = { label: string; detail: string; ok: boolean; warn?: boolean };
 
@@ -62,11 +57,25 @@ async function integrationStatus(): Promise<{ name: string; icon?: LucideIcon; s
 }
 
 export default async function AdminSettingsPage() {
-  await requireRole("admin");
-  const [site, integrations] = await Promise.all([getSiteSettings(), integrationStatus()]);
+  const profile = await requireRole("admin");
+  const [site, integrations, user] = await Promise.all([getSiteSettings(), integrationStatus(), currentUser()]);
+  const problems = integrations.filter((i) => !i.status.ok || i.status.warn).length;
+
+  const nav: SettingsNavItem[] = [
+    { id: "support", label: "Support contact", icon: <Headset />, group: "Site", tone: "bg-emerald-500", summary: site.supportEmail ?? site.supportWhatsapp ?? "Not set" },
+    { id: "announcement", label: "Announcement", icon: <Megaphone />, group: "Site", tone: "bg-brand-orange", summary: site.announcementActive && site.announcementText ? "On" : "Off" },
+    { id: "landing", label: "Landing page", icon: <ImageIcon />, group: "Site", tone: "bg-violet-500", summary: site.heroImage ? "Custom picture" : "Default picture" },
+    { id: "integrations", label: "Integrations", icon: <PlugZap />, group: "System", tone: "bg-slate-600", summary: problems ? `${problems} to check` : "All good" },
+    { id: "account", label: "Your account", icon: <UserCog />, group: "Account", tone: "bg-brand-blue" },
+  ];
 
   return (
-    <SettingsLayout title="Settings" description="Platform-wide settings for MoreSo Tech. Changes apply to everyone." nav={NAV}>
+    <SettingsLayout
+      title="Settings"
+      description="Platform-wide settings for MoreSo Tech. Changes apply to everyone."
+      nav={nav}
+      account={{ name: user?.fullName ?? profile.email, email: profile.email, imageUrl: user?.imageUrl ?? "", hasImage: Boolean(user?.hasImage), href: "/admin/profile" }}
+    >
       <SiteSettingsForm site={site} />
 
       <SettingsSection id="integrations" icon={PlugZap} title="Integrations" description="Services the platform relies on. Keys are managed in your hosting environment, never here.">

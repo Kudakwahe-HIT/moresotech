@@ -107,9 +107,9 @@ export function SiteSettingsForm({ site }: { site: SiteSettings }) {
         />
       </Card>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md lg:left-[296px]">
+      <div data-settings-savebar className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md lg:left-[296px]">
         <div className="mx-auto flex max-w-5xl items-center justify-end gap-2">
-          <button type="submit" disabled={pending} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-orange px-5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(245,130,32,0.6)] transition hover:bg-brand-orange-dark disabled:opacity-70">
+          <button type="submit" disabled={pending} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-orange px-5 max-lg:w-full text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(245,130,32,0.6)] transition hover:bg-brand-orange-dark disabled:opacity-70">
             {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />} Save settings
           </button>
         </div>
@@ -119,18 +119,19 @@ export function SiteSettingsForm({ site }: { site: SiteSettings }) {
 }
 
 function Card({ id, icon: Icon, title, description, children }: { id: string; icon: typeof Headset; title: string; description: string; children: React.ReactNode }) {
+  // Same look and phone behaviour as SettingsSection (a server component, so it can't be used here).
   return (
-    <section id={id} className="scroll-mt-6 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:p-7">
+    <section id={id} data-settings-section className="scroll-mt-6 rounded-2xl bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:p-7 lg:rounded-3xl">
       <div className="flex items-start gap-3.5">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue max-lg:hidden">
           <Icon className="size-5" />
         </span>
         <div>
-          <h3 className="text-base font-bold text-slate-900">{title}</h3>
-          <p className="mt-0.5 text-sm text-slate-500">{description}</p>
+          <h3 className="text-base font-bold text-slate-900 max-lg:hidden">{title}</h3>
+          <p className="text-sm text-slate-500 lg:mt-0.5">{description}</p>
         </div>
       </div>
-      <div className="mt-6">{children}</div>
+      <div className="mt-5 lg:mt-6">{children}</div>
     </section>
   );
 }

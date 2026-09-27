@@ -3,12 +3,14 @@ import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { Bell, CircleCheck, CircleAlert, Download, GraduationCap, LifeBuoy, Mail, MessageCircle, ShieldCheck, TriangleAlert } from "lucide-react";
-import { SettingsLayout, SettingsRow, SettingsSection, type SettingsNavItem } from "@/components/account/settings-layout";
+import { SettingsLayout, type SettingsNavItem } from "@/components/account/settings-layout";
+import { SettingsRow, SettingsSection } from "@/components/account/settings-section";
 import { payments } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getSiteSettings, getUserSettings } from "@/lib/settings";
-import { whatsappLink } from "@/lib/settings-rules";
+import { LEVEL_LABELS } from "@/lib/scholarship-labels";
+import { NOTIFICATION_GROUP_KEYS, whatsappLink } from "@/lib/settings-rules";
 import { DeleteAccount, NotificationPreferences, StudyGoalsForm } from "./settings-forms";
 
 export const metadata: Metadata = {
@@ -17,14 +19,6 @@ export const metadata: Metadata = {
 
 const PROVIDER_NAMES: Record<string, string> = { google: "Google", microsoft: "Microsoft", linkedin_oidc: "LinkedIn", linkedin: "LinkedIn" };
 
-const NAV: SettingsNavItem[] = [
-  { id: "study-goals", label: "Study goals", icon: GraduationCap },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "security", label: "Sign-in & security", icon: ShieldCheck },
-  { id: "data", label: "Your data", icon: Download },
-  { id: "help", label: "Help", icon: LifeBuoy },
-  { id: "delete", label: "Delete account", icon: TriangleAlert, danger: true },
-];
 
 export default async function StudentSettingsPage() {
   const profile = await requireRole("student");
@@ -37,15 +31,39 @@ export default async function StudentSettingsPage() {
 
   const connected = (user?.externalAccounts ?? []).map((a) => PROVIDER_NAMES[a.provider.replace(/^oauth_/, "")] ?? a.provider);
   const emailVerified = user?.primaryEmailAddress?.verification?.status === "verified";
+  const muted = settings?.mutedNotifications ?? [];
+  const goalsSummary = [settings?.targetLevel ? LEVEL_LABELS[settings.targetLevel] : null, settings?.targetIntake].filter(Boolean).join(" · ");
+
+  // Phone list: grouped rows with the current value on the right, like a phone's Settings app.
+  const nav: SettingsNavItem[] = [
+    { id: "study-goals", label: "Study goals", icon: <GraduationCap />, group: "Preferences", tone: "bg-brand-blue", summary: goalsSummary || "Not set" },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: <Bell />,
+      group: "Preferences",
+      tone: "bg-red-500",
+      summary: muted.length === 0 ? "All on" : muted.length === NOTIFICATION_GROUP_KEYS.length ? "Essentials only" : "Some off",
+    },
+    { id: "security", label: "Sign-in & security", icon: <ShieldCheck />, group: "Account", tone: "bg-slate-600", summary: user?.twoFactorEnabled ? "2-step on" : "2-step off" },
+    { id: "data", label: "Your data", icon: <Download />, group: "Account", tone: "bg-violet-500" },
+    { id: "help", label: "Help", icon: <LifeBuoy />, group: "Support", tone: "bg-emerald-500" },
+    { id: "delete", label: "Delete account", icon: <TriangleAlert />, danger: true },
+  ];
 
   return (
-    <SettingsLayout title="Settings" description="Your study goals, notifications, security and data." nav={NAV}>
+    <SettingsLayout
+      title="Settings"
+      description="Your study goals, notifications, security and data."
+      nav={nav}
+      account={{ name: user?.fullName ?? profile.email, email: profile.email, imageUrl: user?.imageUrl ?? "", hasImage: Boolean(user?.hasImage), href: "/dashboard/profile" }}
+    >
       <SettingsSection id="study-goals" icon={GraduationCap} title="Study goals" description="Tell us what you're aiming for. Our reviewers see this alongside your applications.">
         <StudyGoalsForm settings={settings} />
       </SettingsSection>
 
       <SettingsSection id="notifications" icon={Bell} title="Notifications" description="Choose what appears in your notification bell. Changes save straight away.">
-        <NotificationPreferences muted={settings?.mutedNotifications ?? []} />
+        <NotificationPreferences muted={muted} />
       </SettingsSection>
 
       <SettingsSection id="security" icon={ShieldCheck} title="Sign-in & security" description="Your password, connected accounts and signed-in devices are managed in My profile.">
