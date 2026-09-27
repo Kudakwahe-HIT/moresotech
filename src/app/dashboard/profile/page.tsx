@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { UserProfile } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { CalendarDays, CircleCheck, CircleAlert, ShieldCheck } from "lucide-react";
-import { UserAvatar } from "../_components/user-avatar";
+import { UserAvatar } from "@/components/shell/user-avatar";
 
 export const metadata: Metadata = {
   title: "My profile | MoreSo Tech",

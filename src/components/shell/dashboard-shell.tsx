@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Menu, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { AppNotification } from "../_lib/notifications";
-import { NAV_ITEMS } from "./nav-items";
+import type { AppNotification } from "@/lib/notifications";
+import { AREA_HOME, NAV_BY_AREA, type ShellArea } from "./nav-items";
 import { NotificationsPopover } from "./notifications-popover";
 import { ProfileMenu } from "./profile-menu";
 import { SignOutButton } from "./sign-out-button";
@@ -19,13 +19,16 @@ export type ShellUser = {
   email: string;
   imageUrl: string;
   hasImage: boolean;
+  role: "student" | "instructor" | "admin";
 };
 
 export function DashboardShell({
+  area,
   user,
   notifications,
   children,
 }: {
+  area: ShellArea;
   user: ShellUser;
   notifications: AppNotification[];
   children: ReactNode;
@@ -47,6 +50,7 @@ export function DashboardShell({
       />
 
       <Sidebar
+        area={area}
         pathname={pathname}
         user={user}
         badges={{ "/dashboard/notifications": actionCount }}
@@ -55,7 +59,7 @@ export function DashboardShell({
       />
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-6">
-        <TopBar user={user} notifications={notifications} onOpenMenu={() => setMenuOpen(true)} />
+        <TopBar area={area} user={user} notifications={notifications} onOpenMenu={() => setMenuOpen(true)} />
         <main className="flex-1 px-4 pb-10 pt-2 sm:px-6 lg:px-0 lg:pr-2">{children}</main>
       </div>
     </div>
@@ -63,12 +67,14 @@ export function DashboardShell({
 }
 
 function Sidebar({
+  area,
   pathname,
   user,
   badges,
   open,
   onClose,
 }: {
+  area: ShellArea;
   pathname: string;
   user: ShellUser;
   /** Small count shown next to a nav item, keyed by href. */
@@ -86,8 +92,8 @@ function Sidebar({
     >
       <div className="flex items-center justify-between">
         <Link
-          href="/dashboard"
-          aria-label="MoreSo Tech dashboard"
+          href={AREA_HOME[area]}
+          aria-label={area === "admin" ? "MoreSo Tech back office" : "MoreSo Tech dashboard"}
           className="flex h-14 flex-1 items-center justify-center rounded-2xl bg-white px-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
         >
           <Image src="/moresotech-logo.png" alt="MoreSo Tech" width={865} height={288} priority className="h-11 w-auto" />
@@ -102,9 +108,16 @@ function Sidebar({
         </button>
       </div>
 
-      <nav aria-label="Dashboard" className="mt-8 flex-1 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const active = item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
+      {area === "admin" && (
+        <p className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-brand-orange/15 py-2 text-xs font-bold uppercase tracking-[0.16em] text-brand-orange">
+          <span className="size-1.5 rounded-full bg-brand-orange" />
+          Back office
+        </p>
+      )}
+
+      <nav aria-label={area === "admin" ? "Back office" : "Dashboard"} className="mt-6 flex-1 space-y-1 overflow-y-auto">
+        {NAV_BY_AREA[area].map((item) => {
+          const active = item.href === AREA_HOME[area] ? pathname === item.href : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
@@ -151,10 +164,12 @@ function Sidebar({
 }
 
 function TopBar({
+  area,
   user,
   notifications,
   onOpenMenu,
 }: {
+  area: ShellArea;
   user: ShellUser;
   notifications: AppNotification[];
   onOpenMenu: () => void;
@@ -171,24 +186,39 @@ function TopBar({
       </button>
 
       <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-[1.75rem]">
-        {/* Shorter greeting on phones so the name isn't cut off */}
-        <span className="sm:hidden">Hi</span>
-        <span className="hidden sm:inline">Welcome back</span>
-        {user.firstName ? `, ${user.firstName}` : ""} <span aria-hidden>👋</span>
+        {area === "admin" ? (
+          "Back office"
+        ) : (
+          <>
+            {/* Shorter greeting on phones so the name isn't cut off */}
+            <span className="sm:hidden">Hi</span>
+            <span className="hidden sm:inline">Welcome back</span>
+            {user.firstName ? `, ${user.firstName}` : ""} <span aria-hidden>👋</span>
+          </>
+        )}
       </h1>
 
-      <label className="relative hidden w-72 md:block">
-        <span className="sr-only">Search courses</span>
+      {/* Plain GET form: submitting opens the scholarships list filtered by the query. */}
+      <form
+        role="search"
+        action={area === "admin" ? "/admin/scholarships" : "/dashboard/scholarships"}
+        className="relative hidden w-72 md:block"
+      >
+        <label htmlFor="shell-search" className="sr-only">
+          Search scholarships
+        </label>
         <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
         <input
+          id="shell-search"
           type="search"
-          placeholder="Search courses"
+          name="q"
+          placeholder="Search scholarships"
           className="h-11 w-full rounded-full border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
         />
-      </label>
+      </form>
 
       <NotificationsPopover notifications={notifications} />
-      <ProfileMenu user={user} />
+      <ProfileMenu area={area} user={user} />
     </header>
   );
 }

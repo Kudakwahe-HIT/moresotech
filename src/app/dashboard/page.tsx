@@ -14,9 +14,12 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { CalendarCard } from "./_components/calendar-card";
-import { UserAvatar } from "./_components/user-avatar";
+import { DeadlineChip } from "@/components/scholarships/deadline-chip";
+import { listClosingSoon } from "@/lib/scholarships";
+import { CalendarCard } from "@/components/shell/calendar-card";
+import { UserAvatar } from "@/components/shell/user-avatar";
 
 export const metadata: Metadata = {
   title: "Dashboard | MoreSo Tech",
@@ -33,7 +36,7 @@ const WEEK = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 export default async function DashboardPage() {
   // proxy.ts guarantees a signed-in user here.
-  const user = (await currentUser())!;
+  const [user, closingSoon] = await Promise.all([currentUser().then((u) => u!), listClosingSoon(4)]);
 
   const email = user.primaryEmailAddress?.emailAddress ?? "";
   const emailVerified = user.primaryEmailAddress?.verification?.status === "verified";
@@ -99,16 +102,45 @@ export default async function DashboardPage() {
             <ActivityChart />
           </Card>
 
-          {/* Today's schedule */}
+          {/* Scholarships closing soon (real data) */}
           <Card className="flex flex-col p-6">
-            <h2 className="text-lg font-bold text-slate-900">Today&apos;s schedule</h2>
-            <p className="mt-0.5 text-sm text-slate-500">Classes, lectures and deadlines</p>
-            <EmptyState
-              icon={CalendarClock}
-              title="Nothing scheduled today"
-              body="Your classes and deadlines will show up here once you join a course."
-              className="flex-1"
-            />
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Closing soon</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Scholarship deadlines coming up</p>
+              </div>
+              <Link href="/dashboard/scholarships" className="text-sm font-semibold text-brand-blue hover:text-brand-blue-dark">
+                View all
+              </Link>
+            </div>
+            {closingSoon.length ? (
+              <ul className="mt-4 space-y-2">
+                {closingSoon.map((s) => (
+                  <li key={s.id}>
+                    <Link
+                      href={`/dashboard/scholarships/${s.slug}`}
+                      className="flex items-center gap-3 rounded-2xl p-2.5 transition hover:bg-slate-50"
+                    >
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
+                        <GraduationCap className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-slate-900">{s.title}</span>
+                        <span className="block truncate text-xs text-slate-500">{s.university ?? s.provider}</span>
+                      </span>
+                      <DeadlineChip deadline={s.deadline} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                icon={CalendarClock}
+                title="No upcoming deadlines"
+                body="New scholarships will appear here as soon as they're published."
+                className="flex-1"
+              />
+            )}
           </Card>
         </div>
 

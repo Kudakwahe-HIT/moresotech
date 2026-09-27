@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { ArrowRight, Inbox } from "lucide-react";
-import { NotificationIcon } from "../_components/notification-icon";
-import { getNotifications, type AppNotification } from "../_lib/notifications";
+import { NotificationIcon } from "@/components/shell/notification-icon";
+import { getNotifications, type AppNotification } from "@/lib/notifications";
 
 export const metadata: Metadata = {
   title: "Notifications | MoreSo Tech",

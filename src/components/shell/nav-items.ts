@@ -1,23 +1,44 @@
 import {
   Bell,
   BookOpen,
-  CalendarDays,
-  ClipboardList,
+  ClipboardCheck,
+  FolderLock,
+  GraduationCap,
   LayoutGrid,
-  MessageSquare,
   Settings,
+  UserCog,
   Users,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 
-/** Sidebar sections. Everything except Dashboard shows a "coming soon" page for now. */
-export const NAV_ITEMS: { label: string; href: string; icon: LucideIcon }[] = [
+export type NavItem = { label: string; href: string; icon: LucideIcon };
+export type ShellArea = "student" | "admin";
+
+/** Student sidebar. Sections without a page yet show "coming soon". */
+export const STUDENT_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
-  { label: "My Courses", href: "/dashboard/courses", icon: BookOpen },
-  { label: "My Classes", href: "/dashboard/classes", icon: ClipboardList },
-  { label: "Messages", href: "/dashboard/messages", icon: MessageSquare },
+  { label: "Scholarships", href: "/dashboard/scholarships", icon: GraduationCap },
+  { label: "My Applications", href: "/dashboard/applications", icon: ClipboardCheck },
+  { label: "Document Vault", href: "/dashboard/documents", icon: FolderLock },
+  { label: "Courses & Certs", href: "/dashboard/courses", icon: BookOpen },
+  { label: "Webinars", href: "/dashboard/webinars", icon: Video },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { label: "Calendar", href: "/dashboard/calendar", icon: CalendarDays },
-  { label: "Community", href: "/dashboard/community", icon: Users },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
+
+/** Back-office sidebar (admins only). */
+export const ADMIN_NAV: NavItem[] = [
+  { label: "Overview", href: "/admin", icon: LayoutGrid },
+  { label: "Scholarships", href: "/admin/scholarships", icon: GraduationCap },
+  { label: "Applicants", href: "/admin/applicants", icon: Users },
+  { label: "Courses & Certs", href: "/admin/courses", icon: BookOpen },
+  { label: "Webinars", href: "/admin/webinars", icon: Video },
+  { label: "Staff & Roles", href: "/admin/staff", icon: UserCog },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
+];
+
+export const NAV_BY_AREA: Record<ShellArea, NavItem[]> = { student: STUDENT_NAV, admin: ADMIN_NAV };
+
+/** Home link for each area; matched exactly so it isn't highlighted on every sub-page. */
+export const AREA_HOME: Record<ShellArea, string> = { student: "/dashboard", admin: "/admin" };

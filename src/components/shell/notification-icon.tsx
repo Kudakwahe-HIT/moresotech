@@ -1,6 +1,6 @@
 import { BookOpen, Camera, MailWarning, PartyPopper, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { NotificationKind } from "../_lib/notifications";
+import type { NotificationKind } from "@/lib/notifications";
 
 const ICONS: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   welcome: { icon: PartyPopper, tone: "bg-brand-orange/10 text-brand-orange-dark" },

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Bell, ChevronRight } from "lucide-react";
-import type { AppNotification } from "../_lib/notifications";
+import type { AppNotification } from "@/lib/notifications";
 import { NotificationIcon } from "./notification-icon";
 
 export function NotificationsPopover({ notifications }: { notifications: AppNotification[] }) {
