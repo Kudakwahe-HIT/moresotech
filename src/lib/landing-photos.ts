@@ -4,7 +4,7 @@ export type LandingPhoto = {
   /** images.unsplash.com path (served from Unsplash's CDN, resized per screen). */
   src: string;
   alt: string;
-  /** Unsplash's licence asks for nothing, but we credit photographers in the footer. */
+  /** Photographer, for our records (the Unsplash Licence does not require on-page credit). */
   credit: string;
   creditUrl: string;
   /** CSS object-position, to keep faces in frame when cropped. */
@@ -86,4 +86,3 @@ export const PHOTOS = {
   },
 } satisfies Record<string, LandingPhoto>;
 
-export const PHOTO_CREDITS = Object.values(PHOTOS).map(({ credit, creditUrl }) => ({ credit, creditUrl }));

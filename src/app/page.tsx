@@ -13,7 +13,7 @@ import { VerifyForm } from "@/components/landing/verify-form";
 import { AnnouncementBar } from "@/components/shell/announcement-bar";
 import { getProfile, homeFor } from "@/lib/auth";
 import { getLandingData } from "@/lib/landing";
-import { PHOTO_CREDITS, PHOTOS, type LandingPhoto } from "@/lib/landing-photos";
+import { PHOTOS, type LandingPhoto } from "@/lib/landing-photos";
 import { COURSE_CATEGORIES, formatDuration, formatPrice } from "@/lib/learning-rules";
 import { FUNDING_LABELS, LEVEL_LABELS, deadlineInfo } from "@/lib/scholarship-labels";
 import { activeAnnouncement, getSiteSettings } from "@/lib/settings";
@@ -648,22 +648,7 @@ function SiteFooter({ supportEmail, supportWhatsapp }: { supportEmail: string | 
         </div>
       </div>
       <div className="border-t border-slate-100">
-        <div className="mx-auto max-w-7xl space-y-2 px-4 py-6 text-xs text-slate-400 sm:px-6 lg:px-8">
-          <p>
-            Photos on{" "}
-            <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-              Unsplash
-            </a>{" "}
-            by{" "}
-            {PHOTO_CREDITS.map((c, i) => (
-              <span key={c.creditUrl}>
-                <a href={c.creditUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-                  {c.credit}
-                </a>
-                {i < PHOTO_CREDITS.length - 2 ? ", " : i === PHOTO_CREDITS.length - 2 ? " and " : "."}
-              </span>
-            ))}
-          </p>
+        <div className="mx-auto max-w-7xl px-4 py-6 text-xs text-slate-400 sm:px-6 lg:px-8">
           <p>© {new Date().getFullYear()} MoreSo Tech. All rights reserved.</p>
         </div>
       </div>
