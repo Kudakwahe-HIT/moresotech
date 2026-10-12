@@ -48,38 +48,6 @@ export function StaggerItem({ children, className, as = "div" }: { children: Rea
   );
 }
 
-/**
- * Headline that slides in word by word from behind a mask. Lines are separate strings;
- * `accent` lines get the brand colour. The full sentence is still read once by screen readers.
- */
-export function WordsReveal({ lines, className }: { lines: { text: string; accent?: boolean }[]; className?: string }) {
-  let index = 0;
-  return (
-    <h1 className={className} aria-label={lines.map((l) => l.text).join(" ")}>
-      {lines.map((line, li) => (
-        <span key={li} aria-hidden className={cn("block", line.accent && "text-brand-orange")}>
-          {line.text.split(" ").map((word, wi) => {
-            const i = index++;
-            return (
-              <span key={wi} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
-                <motion.span
-                  className="inline-block"
-                  initial={{ y: "105%" }}
-                  animate={{ y: 0 }}
-                  transition={{ duration: 0.9, delay: 0.15 + i * 0.07, ease: EASE }}
-                >
-                  {word}
-                  {wi < line.text.split(" ").length - 1 ? " " : ""}
-                </motion.span>
-              </span>
-            );
-          })}
-        </span>
-      ))}
-    </h1>
-  );
-}
-
 /** Content that drifts at a different speed from the page as it scrolls past (depth). */
 export function Parallax({ children, offset = 60, className }: { children: ReactNode; offset?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
