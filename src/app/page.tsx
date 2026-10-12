@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { ArrowRight, ArrowUpRight, Award, CalendarClock, Check, ListVideo, MessageCircle, Plane, Video } from "lucide-react";
 import { CourseCover } from "@/components/learning/course-cover";
 import { LocalTime } from "@/components/learning/time";
-import { Float, Marquee, MotionProvider, Parallax, PhotoReveal, Reveal, RouteProgress, Stagger, StaggerItem, WordsReveal } from "@/components/landing/motion";
+import { HeroFloat, HeroIn, HeroPhoto, WordsReveal } from "@/components/landing/hero-text";
+import { Float, Marquee, MotionProvider, Parallax, PhotoReveal, Reveal, RouteProgress, Stagger, StaggerItem } from "@/components/landing/motion";
 import { Photo } from "@/components/landing/photo";
 import { VerifyForm } from "@/components/landing/verify-form";
 import { AnnouncementBar } from "@/components/shell/announcement-bar";
@@ -113,19 +114,19 @@ export default async function Home() {
           <section className="relative">
             <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 pb-20 pt-10 sm:px-6 lg:grid-cols-12 lg:gap-6 lg:px-8 lg:pb-28 lg:pt-14">
               <div className="lg:col-span-6">
-                <Reveal y={12}>
+                <HeroIn>
                   <p className="inline-flex items-center gap-3 text-sm font-semibold text-slate-600">
                     <span lang="ko" className="rounded-md bg-[#0f1b2d] px-2 py-1 text-xs font-bold tracking-wider text-white">
                       장학금
                     </span>
                     Scholarships to study in South Korea
                   </p>
-                </Reveal>
+                </HeroIn>
                 <WordsReveal
                   className="mt-6 font-heading text-[3.1rem] font-extrabold leading-[0.98] tracking-[-0.035em] text-[#0f1b2d] sm:text-7xl lg:text-[5.6rem]"
                   lines={[{ text: "From Harare" }, { text: "to Seoul.", accent: true }]}
                 />
-                <Reveal delay={0.55}>
+                <HeroIn at={0.5}>
                   <p className="mt-7 max-w-lg text-lg leading-relaxed text-slate-600">
                     Find the Korean scholarship that fits you, learn the language, and apply with every document checked by people who know what the panels look for.
                   </p>
@@ -150,7 +151,7 @@ export default async function Home() {
                       </span>
                     ))}
                   </p>
-                </Reveal>
+                </HeroIn>
               </div>
 
               <HeroCollage heroUrl={heroUrl} />
@@ -246,7 +247,7 @@ export default async function Home() {
                       </Link>
                     </div>
                     <div className="relative h-64 md:h-full md:min-h-80">
-                      <Photo photo={PHOTOS.seoulCampus} sizes="(min-width: 768px) 50vw, 100vw" />
+                      <Photo photo={PHOTOS.graduateMan} sizes="(min-width: 768px) 50vw, 100vw" />
                     </div>
                   </div>
                 </Reveal>
@@ -495,17 +496,17 @@ function HeroCollage({ heroUrl }: { heroUrl: string | null }) {
   return (
     <div className="relative mx-auto h-[30rem] w-full max-w-xl sm:h-[36rem] lg:col-span-6 lg:max-w-none">
       {/* Main portrait (an admin-uploaded picture replaces it) */}
-      <PhotoReveal className="absolute right-0 top-0 h-[88%] w-[72%] rounded-[28px] shadow-[0_40px_80px_-40px_rgba(15,27,45,0.55)]">
+      <HeroPhoto at={0.1} className="absolute right-0 top-0 h-[88%] w-[72%] rounded-[28px] shadow-[0_40px_80px_-40px_rgba(15,27,45,0.55)]">
         {heroUrl ? (
           <Image src={heroUrl} alt="" fill unoptimized preload sizes="(min-width: 1024px) 36vw, 72vw" className="object-cover" />
         ) : (
           <Photo photo={PHOTOS.graduateCertificate} preload sizes="(min-width: 1024px) 36vw, 72vw" />
         )}
-      </PhotoReveal>
+      </HeroPhoto>
 
       {/* Seoul, small, top left */}
       <Parallax offset={-24} className="absolute left-0 top-4 z-10 w-[36%]">
-        <PhotoReveal delay={0.25} className="relative aspect-[4/5] rounded-[22px] ring-8 ring-white">
+        <HeroPhoto at={0.3} className="relative aspect-[4/5] rounded-[22px] ring-8 ring-white">
           <Photo photo={PHOTOS.seoulCampus} sizes="(min-width: 1024px) 18vw, 36vw" />
           <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/90 px-2.5 py-1 text-[0.7rem] font-semibold text-slate-600 backdrop-blur">
             <span lang="ko" className="font-bold text-[#0f1b2d]">
@@ -513,20 +514,20 @@ function HeroCollage({ heroUrl }: { heroUrl: string | null }) {
             </span>{" "}
             · Seoul
           </span>
-        </PhotoReveal>
+        </HeroPhoto>
       </Parallax>
 
       {/* Student at work, bottom left */}
       <Parallax offset={36} className="absolute bottom-2 left-[5%] z-10 w-[40%]">
-        <PhotoReveal delay={0.4} className="relative aspect-square rounded-[22px] ring-8 ring-white">
-          <Photo photo={PHOTOS.studentLaptop} sizes="(min-width: 1024px) 20vw, 44vw" />
-        </PhotoReveal>
+        <HeroPhoto at={0.45} className="relative aspect-square rounded-[22px] ring-8 ring-white">
+          <Photo photo={PHOTOS.studentLaptop} sizes="(min-width: 1024px) 20vw, 40vw" />
+        </HeroPhoto>
       </Parallax>
 
       {/* Boarding pass */}
-      <Float delay={1} className="absolute -bottom-4 right-2 z-20 w-[min(19rem,78%)] sm:right-6">
+      <HeroFloat at={0.9} className="absolute -bottom-4 right-2 z-20 w-[min(19rem,78%)] sm:right-6">
         <BoardingPass />
-      </Float>
+      </HeroFloat>
     </div>
   );
 }
