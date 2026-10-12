@@ -203,3 +203,9 @@
 .sidebar-scroll::-webkit-scrollbar-thumb:active {
   background: rgb(245 130 32 / 0.8); /* brand orange while dragging */
 }
+
+/* Landing page ticker: two identical rows slide left by one row's width, so the loop is seamless. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

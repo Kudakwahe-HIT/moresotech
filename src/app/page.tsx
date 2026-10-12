@@ -3,67 +3,65 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  ArrowRight,
-  Award,
-  BadgeCheck,
-  BellRing,
-  CalendarClock,
-  CheckCircle2,
-  FileCheck2,
-  FolderLock,
-  GraduationCap,
-  ListVideo,
-  Search,
-  ShieldCheck,
-  Smartphone,
-  Sparkles,
-  Video,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, Award, CalendarClock, Check, ListVideo, MessageCircle, Plane, Video } from "lucide-react";
 import { CourseCover } from "@/components/learning/course-cover";
 import { LocalTime } from "@/components/learning/time";
+import { Float, Marquee, MotionProvider, Parallax, PhotoReveal, Reveal, RouteProgress, Stagger, StaggerItem, WordsReveal } from "@/components/landing/motion";
+import { Photo } from "@/components/landing/photo";
 import { VerifyForm } from "@/components/landing/verify-form";
 import { AnnouncementBar } from "@/components/shell/announcement-bar";
 import { getProfile, homeFor } from "@/lib/auth";
 import { getLandingData } from "@/lib/landing";
-import { activeAnnouncement, getSiteSettings } from "@/lib/settings";
-import { siteHeroUrl, whatsappLink } from "@/lib/settings-rules";
+import { PHOTO_CREDITS, PHOTOS, type LandingPhoto } from "@/lib/landing-photos";
 import { COURSE_CATEGORIES, formatDuration, formatPrice } from "@/lib/learning-rules";
 import { FUNDING_LABELS, LEVEL_LABELS, deadlineInfo } from "@/lib/scholarship-labels";
+import { activeAnnouncement, getSiteSettings } from "@/lib/settings";
+import { siteHeroUrl, whatsappLink } from "@/lib/settings-rules";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "MoreSo Tech | Win a scholarship to study in South Korea",
+  title: "MoreSo Tech | From Harare to Seoul: win a scholarship to study in South Korea",
   description:
-    "Find open Korean scholarships, build the language skills and certificates they ask for, and apply with every document checked by our team.",
+    "Find open Korean scholarships, learn Korean and prepare for TOPIK, and apply with every document checked by our team. Built for students in Zimbabwe.",
 };
 
-const STEPS: { icon: LucideIcon; title: string; body: string }[] = [
+/** The four stops of the journey section. */
+const JOURNEY: { place: string; korean?: string; title: string; body: string; photo: LandingPhoto }[] = [
   {
-    icon: Search,
-    title: "Find the right scholarship",
-    body: "Browse open scholarships with clear eligibility, benefits, required documents and live deadline countdowns.",
+    place: "Harare",
+    korean: "하라레",
+    title: "Find a scholarship you can actually win",
+    body: "Every open scholarship in one place, with who can apply, what it covers, the documents it needs and a live countdown to the deadline. Save the ones that fit you.",
+    photo: PHOTOS.harareFriends,
   },
   {
-    icon: GraduationCap,
-    title: "Prepare with expert courses",
-    body: "Build the Korean language skills, test scores and interview confidence the selection panels look for, and earn a certificate.",
+    place: "Prepare",
+    title: "Learn Korean and build your profile",
+    body: "Courses for TOPIK, documents and interviews, live sessions with instructors, and a certificate with a code any university can check.",
+    photo: PHOTOS.studyingBraids,
   },
   {
-    icon: FileCheck2,
-    title: "Apply with confidence",
-    body: "Upload your documents to a private vault, get each one checked by our team, and track your application to the finish.",
+    place: "Apply",
+    title: "Send an application with nothing missing",
+    body: "Upload to a private vault. Our team reviews every document and tells you exactly what to fix before you submit.",
+    photo: PHOTOS.studyGroup,
+  },
+  {
+    place: "Seoul",
+    korean: "서울",
+    title: "Start your degree in South Korea",
+    body: "Track your application to the decision, with updates on your dashboard at every step.",
+    photo: PHOTOS.seoulNight,
   },
 ];
 
-const FEATURES: { icon: LucideIcon; title: string; body: string; tone: string }[] = [
-  { icon: FolderLock, title: "Private document vault", body: "Passports, transcripts and certificates stored privately. Only you and our reviewers can open them.", tone: "bg-brand-blue/10 text-brand-blue" },
-  { icon: ShieldCheck, title: "Every document reviewed", body: "Our team checks each upload and tells you exactly what to fix before you submit.", tone: "bg-emerald-500/10 text-emerald-600" },
-  { icon: BellRing, title: "Never miss a deadline", body: "A live countdown on every scholarship, and dashboard alerts as your application moves forward.", tone: "bg-amber-500/10 text-amber-600" },
-  { icon: Video, title: "Live sessions", body: "Join Q&As and classes with our instructors on Zoom or Google Meet.", tone: "bg-violet-500/10 text-violet-600" },
-  { icon: Award, title: "Verifiable certificates", body: "Each certificate has a code anyone can check online, so universities know it's genuine.", tone: "bg-brand-orange/10 text-brand-orange-dark" },
-  { icon: Smartphone, title: "Pay the way you already do", body: "Buy courses securely with EcoCash, InnBucks, cards and more through Pesepay.", tone: "bg-rose-500/10 text-rose-600" },
+const TICKER = ["Open scholarships", "Korean language", "TOPIK preparation", "Document checks", "Interview practice", "Live sessions", "Verified certificates", "Pay with EcoCash"];
+
+const LOCAL_POINTS: { title: string; body: string }[] = [
+  { title: "Pay the way you already do", body: "EcoCash, InnBucks, cards and more through Pesepay. Prices in US dollars, no surprises." },
+  { title: "Your documents stay private", body: "Passports and transcripts are stored privately. Only you and your reviewer can open them, and every view is logged." },
+  { title: "Times in your time zone", body: "Live sessions and deadlines show in your local time, so 15:00 in Seoul never catches you out." },
+  { title: "Free to start", body: "Browse, save scholarships and build applications for free. Paid courses show the price upfront." },
 ];
 
 const FAQS: { q: string; a: string }[] = [
@@ -96,282 +94,364 @@ export default async function Home() {
 
   const [{ stats, featuredScholarships, featuredCourses, upcomingSessions }, site] = await Promise.all([getLandingData(), getSiteSettings()]);
   const announcement = activeAnnouncement(site);
+  const heroUrl = siteHeroUrl(site.heroImage);
   const statItems = [
-    { value: stats.scholarships, label: stats.scholarships === 1 ? "Open scholarship" : "Open scholarships" },
-    { value: stats.courses, label: stats.courses === 1 ? "Course" : "Courses" },
-    { value: stats.sessions, label: stats.sessions === 1 ? "Upcoming live session" : "Upcoming live sessions" },
-    { value: stats.certificates, label: stats.certificates === 1 ? "Certificate issued" : "Certificates issued" },
+    { value: stats.scholarships, label: stats.scholarships === 1 ? "open scholarship" : "open scholarships" },
+    { value: stats.courses, label: stats.courses === 1 ? "course" : "courses" },
+    { value: stats.sessions, label: stats.sessions === 1 ? "live session coming up" : "live sessions coming up" },
+    { value: stats.certificates, label: stats.certificates === 1 ? "certificate issued" : "certificates issued" },
   ].filter((s) => s.value > 0);
-  const heroCourse = featuredCourses.find((c) => c.coverImage);
 
   return (
-    <div className="flex min-h-full flex-col bg-white text-slate-900">
-      {announcement && <AnnouncementBar {...announcement} className="rounded-none px-4 py-2.5 sm:justify-center [&>p]:flex-none" />}
-      <SiteHeader />
+    <MotionProvider>
+      <div className="flex min-h-full flex-col bg-white text-slate-900">
+        {announcement && <AnnouncementBar {...announcement} className="rounded-none px-4 py-2.5 sm:justify-center [&>p]:flex-none" />}
+        <SiteHeader />
 
-      <main className="flex-1">
-        {/* ── Hero ─────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden">
-          <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 size-[34rem] rounded-full bg-brand-blue/10 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -left-32 top-64 size-[26rem] rounded-full bg-brand-orange/10 blur-3xl" />
-          <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:px-8 lg:pb-24 lg:pt-16">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-brand-blue/[0.07] px-3 py-1.5 text-xs font-semibold text-brand-blue ring-1 ring-brand-blue/15">
-                <Sparkles className="size-3.5" /> Scholarships to study in South Korea
-              </span>
-              <h1 className="mt-5 font-heading text-[2.4rem] font-extrabold leading-[1.08] tracking-tight text-[#0f1b2d] sm:text-5xl lg:text-[3.6rem]">
-                Get accepted into the scholarship that <span className="relative whitespace-nowrap text-brand-orange">changes everything<Underline /></span>
-              </h1>
-              <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
-                Find open Korean scholarships, build the language skills and certificates they ask for, and apply with every document checked by our team.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/sign-up"
-                  className="group inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-brand-orange px-6 text-base font-bold text-white shadow-[0_14px_30px_-12px_rgba(245,130,32,0.75)] transition hover:bg-brand-orange-dark"
-                >
-                  Create your free account <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-                <Link
-                  href="#scholarships"
-                  className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-white px-6 text-base font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300"
-                >
-                  See open scholarships
-                </Link>
-              </div>
-              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
-                {["Free to join", "Sign in with Google, Microsoft or LinkedIn", "Pay with EcoCash or card"].map((t) => (
-                  <li key={t} className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="size-4 text-emerald-500" /> {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <HeroVisual heroUrl={siteHeroUrl(site.heroImage)} course={heroCourse} />
-          </div>
-        </section>
-
-        {/* ── Live numbers ─────────────────────────────────────── */}
-        {/* One lonely number looks emptier than none, so wait until there are a few to show. */}
-        {statItems.length >= 2 && (
-          <section aria-label="MoreSo Tech in numbers" className="border-y border-slate-100 bg-slate-50/70">
-            <dl className={cn("mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 lg:px-8", statItems.length >= 4 ? "grid-cols-2 lg:grid-cols-4" : statItems.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
-              {statItems.map((s) => (
-                <div key={s.label} className="flex flex-col-reverse gap-1 text-center">
-                  <dt className="text-sm font-medium text-slate-500">{s.label}</dt>
-                  <dd className="font-heading text-3xl font-extrabold tracking-tight text-[#0f1b2d] sm:text-4xl">{s.value.toLocaleString()}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        )}
-
-        {/* ── How it works ─────────────────────────────────────── */}
-        <section id="how-it-works" className="scroll-mt-20 py-20 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="How it works" title="From “I want to study in Korea” to an offer letter" body="Three clear steps, with our team beside you the whole way." />
-            <ol className="mt-14 grid gap-6 md:grid-cols-3">
-              {STEPS.map((s, i) => (
-                <li key={s.title} className="relative rounded-3xl bg-white p-7 ring-1 ring-slate-200/80 transition hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)]">
-                  <span className="absolute right-6 top-6 font-heading text-5xl font-extrabold text-slate-100">{i + 1}</span>
-                  <span className="relative flex size-12 items-center justify-center rounded-2xl bg-[#0f1b2d] text-white">
-                    <s.icon className="size-6" />
-                  </span>
-                  <h3 className="relative mt-5 text-lg font-bold text-[#0f1b2d]">{s.title}</h3>
-                  <p className="relative mt-2 text-[0.95rem] leading-relaxed text-slate-600">{s.body}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        {/* ── Scholarships ─────────────────────────────────────── */}
-        <section id="scholarships" className="scroll-mt-20 bg-[#0f1b2d] py-20 text-white sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-              <SectionHeading dark align="left" eyebrow="Open now" title="Scholarships you can apply for" body="Fully and partly funded programmes, with everything you need to know in one place." />
-              <Link href="/sign-up" className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-brand-orange hover:text-[#f7a24f]">
-                See every scholarship <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
-            {featuredScholarships.length ? (
-              <div className="mt-12 grid gap-5 md:grid-cols-3">
-                {featuredScholarships.map((s) => {
-                  const deadline = deadlineInfo(s.deadline);
-                  return (
+        <main className="flex-1 overflow-x-clip">
+          {/* ── Hero ─────────────────────────────────────────────── */}
+          <section className="relative">
+            <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 pb-20 pt-10 sm:px-6 lg:grid-cols-12 lg:gap-6 lg:px-8 lg:pb-28 lg:pt-14">
+              <div className="lg:col-span-6">
+                <Reveal y={12}>
+                  <p className="inline-flex items-center gap-3 text-sm font-semibold text-slate-600">
+                    <span lang="ko" className="rounded-md bg-[#0f1b2d] px-2 py-1 text-xs font-bold tracking-wider text-white">
+                      장학금
+                    </span>
+                    Scholarships to study in South Korea
+                  </p>
+                </Reveal>
+                <WordsReveal
+                  className="mt-6 font-heading text-[3.1rem] font-extrabold leading-[0.98] tracking-[-0.035em] text-[#0f1b2d] sm:text-7xl lg:text-[5.6rem]"
+                  lines={[{ text: "From Harare" }, { text: "to Seoul.", accent: true }]}
+                />
+                <Reveal delay={0.55}>
+                  <p className="mt-7 max-w-lg text-lg leading-relaxed text-slate-600">
+                    Find the Korean scholarship that fits you, learn the language, and apply with every document checked by people who know what the panels look for.
+                  </p>
+                  <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                     <Link
-                      key={s.id}
-                      href={`/dashboard/scholarships/${s.slug}`}
-                      className="group flex flex-col rounded-3xl bg-white/[0.05] p-6 ring-1 ring-white/10 transition hover:-translate-y-1 hover:bg-white/[0.08] hover:ring-white/20"
+                      href="/sign-up"
+                      className="group inline-flex h-14 items-center justify-center gap-2 rounded-full bg-brand-orange px-7 text-base font-bold text-white shadow-[0_18px_36px_-14px_rgba(245,130,32,0.8)] transition hover:-translate-y-0.5 hover:bg-brand-orange-dark"
                     >
-                      <div className="flex flex-wrap gap-2">
-                        <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">{FUNDING_LABELS[s.fundingType]}</span>
-                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-200">{LEVEL_LABELS[s.level]}</span>
-                      </div>
-                      <h3 className="mt-4 text-lg font-bold leading-snug">{s.title}</h3>
-                      <p className="mt-1 text-sm text-slate-400">{[s.provider, s.university].filter(Boolean).join(" · ")}</p>
-                      <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-300">{s.summary}</p>
-                      <div className="mt-auto flex items-center justify-between gap-3 pt-6 text-sm">
-                        <span className={cn("inline-flex items-center gap-1.5 font-semibold", deadline.tone === "urgent" ? "text-red-300" : deadline.tone === "soon" ? "text-amber-300" : "text-slate-300")}>
-                          <CalendarClock className="size-4" /> {deadline.label}
-                        </span>
-                        <span className="font-semibold text-brand-orange group-hover:underline">View</span>
-                      </div>
+                      Start your journey <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
                     </Link>
-                  );
-                })}
+                    <a
+                      href="#journey"
+                      className="inline-flex h-14 items-center justify-center gap-2 rounded-full px-7 text-base font-semibold text-[#0f1b2d] ring-1 ring-slate-300 transition hover:bg-slate-50"
+                    >
+                      See how it works
+                    </a>
+                  </div>
+                  <p className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
+                    {["Free to join", "Pay with EcoCash", "Google, Microsoft or LinkedIn sign-in"].map((t) => (
+                      <span key={t} className="inline-flex items-center gap-1.5">
+                        <Check className="size-4 text-emerald-600" strokeWidth={3} /> {t}
+                      </span>
+                    ))}
+                  </p>
+                </Reveal>
               </div>
-            ) : (
-              <p className="mt-12 rounded-3xl bg-white/[0.05] px-6 py-10 text-center text-slate-300 ring-1 ring-white/10">
-                New scholarships are being added. Create a free account and you&apos;ll see them the moment they open.
-              </p>
-            )}
-          </div>
-        </section>
 
-        {/* ── Courses ──────────────────────────────────────────── */}
-        {featuredCourses.length > 0 && (
-          <section id="courses" className="scroll-mt-20 py-20 sm:py-24">
+              <HeroCollage heroUrl={heroUrl} />
+            </div>
+          </section>
+
+          {/* ── Ticker ───────────────────────────────────────────── */}
+          <div className="bg-[#0f1b2d] py-5 text-sm font-semibold uppercase tracking-[0.18em] text-white/85">
+            <Marquee items={TICKER} />
+          </div>
+
+          {/* ── Live numbers (only once there's enough to say) ───── */}
+          {statItems.length >= 2 && (
+            <section aria-label="MoreSo Tech in numbers" className="border-b border-slate-100">
+              <Stagger className="mx-auto flex max-w-7xl flex-wrap justify-center gap-x-16 gap-y-6 px-4 py-12 sm:px-6 lg:px-8">
+                {statItems.map((s) => (
+                  <StaggerItem key={s.label} className="flex items-baseline gap-2.5">
+                    <span className="font-heading text-4xl font-extrabold tracking-tight text-[#0f1b2d]">{s.value.toLocaleString()}</span>
+                    <span className="text-sm font-medium text-slate-500">{s.label}</span>
+                  </StaggerItem>
+                ))}
+              </Stagger>
+            </section>
+          )}
+
+          {/* ── The journey ──────────────────────────────────────── */}
+          <section id="journey" className="scroll-mt-20 bg-[#f7f3ec] py-24 sm:py-32">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+              <Reveal className="max-w-2xl">
+                <Eyebrow>How it works</Eyebrow>
+                <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-[#0f1b2d] sm:text-[3.4rem]">
+                  One route, four stops.
+                  <span className="block text-slate-400">We walk it with you.</span>
+                </h2>
+              </Reveal>
+
+              <RouteProgress className="mt-20">
+                <ol className="space-y-20 md:space-y-28">
+                  {JOURNEY.map((stop, i) => (
+                    <JourneyStop key={stop.place} stop={stop} index={i} />
+                  ))}
+                </ol>
+              </RouteProgress>
+            </div>
+          </section>
+
+          {/* ── Scholarships ─────────────────────────────────────── */}
+          <section id="scholarships" className="scroll-mt-20 bg-[#0f1b2d] py-24 text-white sm:py-28">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-                <SectionHeading align="left" eyebrow="Courses & certificates" title="Build what scholarship panels look for" body="Language, test preparation, documents and interviews, taught by our instructors." />
-                <Link href="/sign-up" className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-brand-blue hover:text-brand-blue-dark">
-                  Browse all courses <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                <Reveal className="max-w-2xl">
+                  <Eyebrow dark>Open now</Eyebrow>
+                  <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-5xl">Scholarships you can apply for</h2>
+                </Reveal>
+                <Reveal delay={0.1}>
+                  <Link href="/sign-up" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange hover:text-[#f7a24f]">
+                    See every scholarship <ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </Link>
+                </Reveal>
               </div>
-              <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {featuredCourses.map((c) => {
-                  const instructor = [c.instructorFirst, c.instructorLast].filter(Boolean).join(" ");
-                  return (
-                    <Link
-                      key={c.id}
-                      href={`/dashboard/courses/${c.slug}`}
-                      className="group flex flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-1 hover:shadow-[0_24px_50px_-24px_rgba(15,23,42,0.3)]"
-                    >
-                      <div className="relative overflow-hidden">
-                        <CourseCover course={c} className="aspect-[16/9] transition duration-500 group-hover:scale-[1.03]" />
-                        <span className="absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
-                          {COURSE_CATEGORIES[c.category] ?? "Course"}
-                        </span>
-                      </div>
-                      <div className="flex flex-1 flex-col p-6">
-                        <h3 className="text-lg font-bold leading-snug text-[#0f1b2d]">{c.title}</h3>
-                        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-500">{c.subtitle}</p>
-                        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                          <span className="inline-flex items-center gap-1">
-                            <ListVideo className="size-3.5" /> {c.lessonCount} lesson{c.lessonCount === 1 ? "" : "s"}
-                          </span>
-                          {c.awardsCertificate && (
-                            <span className="inline-flex items-center gap-1 text-brand-orange-dark">
-                              <Award className="size-3.5" /> Certificate
+              {featuredScholarships.length ? (
+                <Stagger className="mt-14 grid gap-px overflow-hidden rounded-3xl bg-white/10 md:grid-cols-3">
+                  {featuredScholarships.map((s) => {
+                    const deadline = deadlineInfo(s.deadline);
+                    return (
+                      <StaggerItem key={s.id} className="bg-[#0f1b2d]">
+                        <Link href={`/dashboard/scholarships/${s.slug}`} className="group flex h-full flex-col p-7 transition-colors hover:bg-white/[0.04]">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">
+                            {FUNDING_LABELS[s.fundingType]} · {LEVEL_LABELS[s.level]}
+                          </p>
+                          <h3 className="mt-4 text-xl font-bold leading-snug">{s.title}</h3>
+                          <p className="mt-1 text-sm text-slate-400">{[s.provider, s.university].filter(Boolean).join(" · ")}</p>
+                          <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-slate-300">{s.summary}</p>
+                          <div className="mt-auto flex items-center justify-between gap-3 pt-8 text-sm">
+                            <span className={cn("inline-flex items-center gap-1.5 font-semibold", deadline.tone === "urgent" ? "text-red-300" : deadline.tone === "soon" ? "text-amber-300" : "text-slate-300")}>
+                              <CalendarClock className="size-4" /> {deadline.label}
                             </span>
-                          )}
-                          {instructor && <span>by {instructor}</span>}
-                        </div>
-                        <div className="mt-auto flex items-center justify-between pt-6">
-                          <span className="text-xl font-extrabold text-[#0f1b2d]">{c.priceCents ? formatPrice(c.priceCents, c.currency) : "Free"}</span>
-                          <span className="inline-flex items-center gap-1 text-sm font-semibold text-brand-blue">
-                            View course <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── Features ─────────────────────────────────────────── */}
-        <section id="features" className="scroll-mt-20 bg-slate-50/80 py-20 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Why MoreSo Tech" title="Everything for your application, in one place" body="No more scattered emails, lost documents or missed deadlines." />
-            <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {FEATURES.map((f) => (
-                <div key={f.title} className="rounded-3xl bg-white p-6 ring-1 ring-slate-200/70">
-                  <span className={cn("flex size-11 items-center justify-center rounded-2xl", f.tone)}>
-                    <f.icon className="size-5" />
-                  </span>
-                  <h3 className="mt-4 font-bold text-[#0f1b2d]">{f.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{f.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Live sessions ────────────────────────────────────── */}
-        {upcomingSessions.length > 0 && (
-          <section id="sessions" className="scroll-mt-20 py-20 sm:py-24">
-            <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
-              <SectionHeading align="left" eyebrow="Live sessions" title="Learn live with our instructors" body="Ask your questions in real time. Sign up free to register; you'll get the link when the room opens." />
-              <ul className="space-y-3">
-                {upcomingSessions.map((w) => (
-                  <li key={w.id} className="flex items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200/80">
-                    <span className="flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#0f1b2d] text-white">
-                      <Video className="size-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-[#0f1b2d]">{w.title}</p>
-                      <p className="truncate text-sm text-slate-500">
-                        <LocalTime iso={w.startsAt.toISOString()} /> · {formatDuration(w.durationMinutes)} · {w.hostName}
-                      </p>
+                            <ArrowUpRight className="size-5 text-brand-orange transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                          </div>
+                        </Link>
+                      </StaggerItem>
+                    );
+                  })}
+                </Stagger>
+              ) : (
+                <Reveal>
+                  <div className="mt-14 grid items-center gap-8 overflow-hidden rounded-3xl bg-white/[0.04] ring-1 ring-white/10 md:grid-cols-[1fr_1.1fr]">
+                    <div className="p-8 sm:p-10">
+                      <p className="text-2xl font-bold leading-snug">The next intake is being added now.</p>
+                      <p className="mt-3 text-slate-300">Create a free account and you&apos;ll see each scholarship the moment it opens, with its deadline counting down on your dashboard.</p>
+                      <Link href="/sign-up" className="mt-6 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-[#0f1b2d] transition hover:bg-slate-100">
+                        Get notified first <ArrowRight className="size-4" />
+                      </Link>
                     </div>
-                    <span className={cn("hidden shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold sm:inline", w.access === "everyone" ? "bg-emerald-50 text-emerald-700" : "bg-violet-50 text-violet-700")}>
-                      {w.access === "everyone" ? "Open to all" : "Course students"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                    <div className="relative h-64 md:h-full md:min-h-80">
+                      <Photo photo={PHOTOS.seoulCampus} sizes="(min-width: 768px) 50vw, 100vw" />
+                    </div>
+                  </div>
+                </Reveal>
+              )}
             </div>
           </section>
-        )}
 
-        {/* ── FAQ ──────────────────────────────────────────────── */}
-        <section id="faq" className="scroll-mt-20 border-t border-slate-100 py-20 sm:py-24">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6">
-            <SectionHeading eyebrow="Questions" title="Frequently asked questions" />
-            <div className="mt-12 divide-y divide-slate-200 rounded-3xl ring-1 ring-slate-200">
-              {FAQS.map((f) => (
-                <details key={f.q} className="group px-6 [&_summary::-webkit-details-marker]:hidden">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-semibold text-[#0f1b2d]">
-                    {f.q}
-                    <span aria-hidden className="flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition group-open:rotate-45 group-open:bg-brand-orange/10 group-open:text-brand-orange">
-                      +
-                    </span>
-                  </summary>
-                  <p className="-mt-1 pb-5 text-[0.95rem] leading-relaxed text-slate-600">{f.a}</p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
+          {/* ── Courses ──────────────────────────────────────────── */}
+          {featuredCourses.length > 0 && (
+            <section id="courses" className="scroll-mt-20 py-24 sm:py-28">
+              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+                  <Reveal className="max-w-2xl">
+                    <Eyebrow>Courses & certificates</Eyebrow>
+                    <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-[#0f1b2d] sm:text-5xl">Build what the panels look for</h2>
+                  </Reveal>
+                  <Reveal delay={0.1}>
+                    <Link href="/sign-up" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-brand-blue">
+                      Browse all courses <ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    </Link>
+                  </Reveal>
+                </div>
+                <Stagger className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                  {featuredCourses.map((c) => {
+                    const instructor = [c.instructorFirst, c.instructorLast].filter(Boolean).join(" ");
+                    return (
+                      <StaggerItem key={c.id}>
+                        <Link href={`/dashboard/courses/${c.slug}`} className="group block">
+                          <div className="relative overflow-hidden rounded-3xl">
+                            <CourseCover course={c} className="aspect-[4/3] transition duration-700 group-hover:scale-[1.04]" />
+                            <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-[#0f1b2d] backdrop-blur">
+                              {c.priceCents ? formatPrice(c.priceCents, c.currency) : "Free"}
+                            </span>
+                          </div>
+                          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-blue">{COURSE_CATEGORIES[c.category] ?? "Course"}</p>
+                          <h3 className="mt-2 text-xl font-bold leading-snug text-[#0f1b2d] decoration-brand-orange decoration-2 underline-offset-4 group-hover:underline">{c.title}</h3>
+                          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-500">{c.subtitle}</p>
+                          <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                            <span className="inline-flex items-center gap-1">
+                              <ListVideo className="size-3.5" /> {c.lessonCount} lesson{c.lessonCount === 1 ? "" : "s"}
+                            </span>
+                            {c.awardsCertificate && (
+                              <span className="inline-flex items-center gap-1 text-brand-orange-dark">
+                                <Award className="size-3.5" /> Certificate
+                              </span>
+                            )}
+                            {instructor && <span>with {instructor}</span>}
+                          </p>
+                        </Link>
+                      </StaggerItem>
+                    );
+                  })}
+                </Stagger>
+              </div>
+            </section>
+          )}
 
-        {/* ── Final call to action ─────────────────────────────── */}
-        <section className="px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-[#0f1b2d] px-6 py-14 text-center text-white sm:px-12 sm:py-16">
-            <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-brand-blue/40 blur-3xl" />
-            <div aria-hidden className="pointer-events-none absolute -bottom-28 -left-10 size-72 rounded-full bg-brand-orange/25 blur-3xl" />
-            <div className="relative">
-              <h2 className="mx-auto max-w-2xl font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Your Korean scholarship starts with one free account</h2>
-              <p className="mx-auto mt-4 max-w-xl text-slate-300">Save scholarships, start your application and get your documents reviewed. Joining takes about a minute.</p>
-              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                <Link href="/sign-up" className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-brand-orange px-6 text-base font-bold text-white shadow-[0_14px_30px_-12px_rgba(245,130,32,0.75)] transition hover:bg-brand-orange-dark">
-                  Get started free <ArrowRight className="size-5" />
-                </Link>
-                <Link href="/sign-in" className="inline-flex h-13 items-center justify-center rounded-2xl bg-white/10 px-6 text-base font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/15">
-                  I already have an account
-                </Link>
+          {/* ── Made for Zimbabwe ────────────────────────────────── */}
+          <section id="local" className="scroll-mt-20 bg-[#f7f3ec] py-24 sm:py-32">
+            <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
+              <div className="relative">
+                <PhotoReveal className="relative aspect-[4/5] rounded-[28px] sm:aspect-[5/4] lg:aspect-[4/5]">
+                  <Parallax offset={30} className="absolute -inset-y-10 inset-x-0">
+                    <Photo photo={PHOTOS.campusBench} sizes="(min-width: 1024px) 45vw, 100vw" />
+                  </Parallax>
+                </PhotoReveal>
+                <Float delay={0.6} className="absolute -bottom-6 right-4 sm:right-8">
+                  <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_24px_50px_-20px_rgba(15,27,45,0.45)]">
+                    <span className="flex size-10 items-center justify-center rounded-xl bg-[#e11b22]/10 text-sm font-black text-[#c8161d]">$</span>
+                    <div>
+                      <p className="text-sm font-bold text-[#0f1b2d]">Paid with EcoCash</p>
+                      <p className="text-xs text-slate-500">Course unlocked instantly</p>
+                    </div>
+                  </div>
+                </Float>
+              </div>
+
+              <div>
+                <Reveal>
+                  <Eyebrow>Made for students in Zimbabwe</Eyebrow>
+                  <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-[#0f1b2d] sm:text-5xl">Built around how you study, pay and stay in touch.</h2>
+                </Reveal>
+                <Stagger as="ul" className="mt-10 divide-y divide-[#0f1b2d]/10 border-y border-[#0f1b2d]/10">
+                  {LOCAL_POINTS.map((p, i) => (
+                    <StaggerItem as="li" key={p.title} className="flex gap-5 py-5">
+                      <span className="font-heading text-sm font-extrabold text-brand-orange">0{i + 1}</span>
+                      <div>
+                        <p className="font-bold text-[#0f1b2d]">{p.title}</p>
+                        <p className="mt-1 text-[0.95rem] leading-relaxed text-slate-600">{p.body}</p>
+                      </div>
+                    </StaggerItem>
+                  ))}
+                </Stagger>
+                {site.supportWhatsapp && (
+                  <Reveal delay={0.2}>
+                    <a
+                      href={whatsappLink(site.supportWhatsapp)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-emerald-600 px-6 text-sm font-bold text-white transition hover:bg-emerald-700"
+                    >
+                      <MessageCircle className="size-4" /> Ask us on WhatsApp
+                    </a>
+                  </Reveal>
+                )}
               </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
 
-      <SiteFooter supportEmail={site.supportEmail} supportWhatsapp={site.supportWhatsapp} />
-    </div>
+          {/* ── Live sessions ────────────────────────────────────── */}
+          {upcomingSessions.length > 0 && (
+            <section id="sessions" className="scroll-mt-20 py-24 sm:py-28">
+              <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-8">
+                <Reveal>
+                  <Eyebrow>Live sessions</Eyebrow>
+                  <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-[#0f1b2d] sm:text-5xl">Ask your questions, live.</h2>
+                  <p className="mt-4 max-w-md text-lg leading-relaxed text-slate-600">Sign up free to register. You&apos;ll get the link when the room opens.</p>
+                </Reveal>
+                <Stagger as="ul" className="divide-y divide-slate-200 border-y border-slate-200">
+                  {upcomingSessions.map((w) => (
+                    <StaggerItem as="li" key={w.id} className="flex items-center gap-5 py-5">
+                      <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#0f1b2d] text-white">
+                        <Video className="size-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-lg font-bold text-[#0f1b2d]">{w.title}</p>
+                        <p className="truncate text-sm text-slate-500">
+                          <LocalTime iso={w.startsAt.toISOString()} /> · {formatDuration(w.durationMinutes)} · {w.hostName}
+                        </p>
+                      </div>
+                      <span className={cn("hidden shrink-0 text-xs font-bold uppercase tracking-wider sm:inline", w.access === "everyone" ? "text-emerald-700" : "text-violet-700")}>
+                        {w.access === "everyone" ? "Open to all" : "Course students"}
+                      </span>
+                    </StaggerItem>
+                  ))}
+                </Stagger>
+              </div>
+            </section>
+          )}
+
+          {/* ── FAQ ──────────────────────────────────────────────── */}
+          <section id="faq" className="scroll-mt-20 border-t border-slate-100 py-24 sm:py-28">
+            <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
+              <Reveal>
+                <Eyebrow>Questions</Eyebrow>
+                <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-[#0f1b2d] sm:text-5xl">Before you start</h2>
+                {site.supportEmail && (
+                  <p className="mt-4 text-slate-600">
+                    Something else?{" "}
+                    <a href={`mailto:${site.supportEmail}`} className="font-semibold text-brand-blue underline-offset-4 hover:underline">
+                      {site.supportEmail}
+                    </a>
+                  </p>
+                )}
+              </Reveal>
+              <Reveal delay={0.1}>
+                <div className="divide-y divide-slate-200 border-y border-slate-200">
+                  {FAQS.map((f) => (
+                    <details key={f.q} className="group [&_summary::-webkit-details-marker]:hidden">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-lg font-bold text-[#0f1b2d]">
+                        {f.q}
+                        <span aria-hidden className="relative size-5 shrink-0">
+                          <span className="absolute left-0 top-1/2 h-0.5 w-5 -translate-y-1/2 rounded bg-brand-orange" />
+                          <span className="absolute left-1/2 top-0 h-5 w-0.5 -translate-x-1/2 rounded bg-brand-orange transition-transform duration-300 group-open:scale-y-0" />
+                        </span>
+                      </summary>
+                      <p className="-mt-2 pb-6 pr-10 leading-relaxed text-slate-600">{f.a}</p>
+                    </details>
+                  ))}
+                </div>
+              </Reveal>
+            </div>
+          </section>
+
+          {/* ── Final call to action ─────────────────────────────── */}
+          <section className="px-4 pb-6 sm:px-6 lg:px-8">
+            <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem]">
+              <Parallax offset={40} className="absolute -inset-y-16 inset-x-0">
+                <Photo photo={PHOTOS.graduatesGroup} sizes="100vw" />
+              </Parallax>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0f1b2d] via-[#0f1b2d]/85 to-[#0f1b2d]/30" />
+              <div className="relative px-6 py-20 text-white sm:px-14 sm:py-28">
+                <Reveal className="max-w-xl">
+                  <p lang="ko" className="font-heading text-sm font-bold tracking-[0.3em] text-brand-orange">
+                    합격 · ACCEPTED
+                  </p>
+                  <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-6xl">Your offer letter starts here.</h2>
+                  <p className="mt-5 text-lg text-slate-200">Save scholarships, start your application and get your documents reviewed. Joining takes about a minute.</p>
+                  <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                    <Link href="/sign-up" className="group inline-flex h-14 items-center justify-center gap-2 rounded-full bg-brand-orange px-7 text-base font-bold text-white transition hover:bg-brand-orange-dark">
+                      Create your free account <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                    <Link href="/sign-in" className="inline-flex h-14 items-center justify-center rounded-full px-7 text-base font-semibold text-white ring-1 ring-white/40 transition hover:bg-white/10">
+                      I have an account
+                    </Link>
+                  </div>
+                </Reveal>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <SiteFooter supportEmail={site.supportEmail} supportWhatsapp={site.supportWhatsapp} />
+      </div>
+    </MotionProvider>
   );
 }
 
@@ -379,29 +459,29 @@ export default async function Home() {
 
 function SiteHeader() {
   const links = [
-    { href: "#how-it-works", label: "How it works" },
+    { href: "#journey", label: "How it works" },
     { href: "#scholarships", label: "Scholarships" },
-    { href: "#courses", label: "Courses" },
+    { href: "#local", label: "Why us" },
     { href: "#faq", label: "FAQ" },
   ];
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-100/80 bg-white/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-18 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
         <Link href="/" aria-label="MoreSo Tech home" className="shrink-0">
           <Image src="/moresotech-logo.png" alt="MoreSo Tech" width={865} height={288} preload className="h-9 w-auto sm:h-10" />
         </Link>
-        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
-            <a key={l.href} href={l.href} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            <a key={l.href} href={l.href} className="text-sm font-semibold text-slate-600 transition hover:text-[#0f1b2d]">
               {l.label}
             </a>
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/sign-in" className="hidden h-10 items-center rounded-xl px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:inline-flex">
+          <Link href="/sign-in" className="hidden h-10 items-center rounded-full px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:inline-flex">
             Sign in
           </Link>
-          <Link href="/sign-up" className="inline-flex h-10 items-center rounded-xl bg-[#0f1b2d] px-4 text-sm font-semibold text-white transition hover:bg-[#1a2a42]">
+          <Link href="/sign-up" className="inline-flex h-10 items-center rounded-full bg-[#0f1b2d] px-5 text-sm font-semibold text-white transition hover:bg-[#1a2a42]">
             Get started
           </Link>
         </div>
@@ -410,92 +490,139 @@ function SiteHeader() {
   );
 }
 
-/** Illustration with floating cards that preview what the student dashboard does. */
-function HeroVisual({ heroUrl, course }: { heroUrl: string | null; course?: { id: string; title: string; category: string; coverImage: string | null } }) {
+/** Three photos and a boarding pass, layered, each moving at its own pace. */
+function HeroCollage({ heroUrl }: { heroUrl: string | null }) {
   return (
-    <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
-      <div className="relative aspect-[5/4] overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-blue/[0.08] via-white to-brand-orange/[0.08] ring-1 ring-slate-200/70">
+    <div className="relative mx-auto h-[30rem] w-full max-w-xl sm:h-[36rem] lg:col-span-6 lg:max-w-none">
+      {/* Main portrait (an admin-uploaded picture replaces it) */}
+      <PhotoReveal className="absolute right-0 top-0 h-[88%] w-[72%] rounded-[28px] shadow-[0_40px_80px_-40px_rgba(15,27,45,0.55)]">
         {heroUrl ? (
-          <Image src={heroUrl} alt="" fill unoptimized preload sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
-        ) : course ? (
-          <CourseCover course={course} preload sizes="(min-width: 1024px) 45vw, 100vw" className="absolute inset-0" />
+          <Image src={heroUrl} alt="" fill unoptimized preload sizes="(min-width: 1024px) 36vw, 72vw" className="object-cover" />
         ) : (
-          <Image src="/illustrations/sign-up.svg" alt="" fill preload sizes="(min-width: 1024px) 45vw, 100vw" className="object-contain p-8" />
+          <Photo photo={PHOTOS.graduateCertificate} preload sizes="(min-width: 1024px) 36vw, 72vw" />
         )}
+      </PhotoReveal>
+
+      {/* Seoul, small, top left */}
+      <Parallax offset={-24} className="absolute left-0 top-4 z-10 w-[36%]">
+        <PhotoReveal delay={0.25} className="relative aspect-[4/5] rounded-[22px] ring-8 ring-white">
+          <Photo photo={PHOTOS.seoulCampus} sizes="(min-width: 1024px) 18vw, 36vw" />
+          <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/90 px-2.5 py-1 text-[0.7rem] font-semibold text-slate-600 backdrop-blur">
+            <span lang="ko" className="font-bold text-[#0f1b2d]">
+              서울
+            </span>{" "}
+            · Seoul
+          </span>
+        </PhotoReveal>
+      </Parallax>
+
+      {/* Student at work, bottom left */}
+      <Parallax offset={36} className="absolute bottom-2 left-[5%] z-10 w-[40%]">
+        <PhotoReveal delay={0.4} className="relative aspect-square rounded-[22px] ring-8 ring-white">
+          <Photo photo={PHOTOS.studentLaptop} sizes="(min-width: 1024px) 20vw, 44vw" />
+        </PhotoReveal>
+      </Parallax>
+
+      {/* Boarding pass */}
+      <Float delay={1} className="absolute -bottom-4 right-2 z-20 w-[min(19rem,78%)] sm:right-6">
+        <BoardingPass />
+      </Float>
+    </div>
+  );
+}
+
+function BoardingPass() {
+  return (
+    <div aria-hidden className="overflow-hidden rounded-2xl bg-white shadow-[0_30px_60px_-24px_rgba(15,27,45,0.5)] ring-1 ring-slate-200/70">
+      <div className="flex items-center justify-between bg-[#0f1b2d] px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-white/80">
+        <span>Boarding pass</span>
+        <span className="text-brand-orange">Scholar class</span>
       </div>
-
-      <FloatingCard className="-left-3 top-8 sm:-left-8">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-          <BadgeCheck className="size-5" />
-        </span>
+      <div className="flex items-center justify-between gap-3 px-4 py-4">
         <div>
-          <p className="text-sm font-bold text-[#0f1b2d]">Document verified</p>
-          <p className="text-xs text-slate-500">Checked by a reviewer</p>
+          <p className="font-heading text-3xl font-extrabold leading-none text-[#0f1b2d]">HRE</p>
+          <p className="mt-1 text-[0.7rem] text-slate-500">Harare</p>
         </div>
-      </FloatingCard>
-
-      <FloatingCard className="-right-2 bottom-24 sm:-right-6">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-          <CalendarClock className="size-5" />
-        </span>
-        <div>
-          <p className="text-sm font-bold text-[#0f1b2d]">Deadline reminder</p>
-          <p className="text-xs text-slate-500">On your dashboard</p>
+        <div className="relative flex flex-1 items-center">
+          <span className="h-px flex-1 border-t-2 border-dashed border-slate-300" />
+          <Plane className="mx-1 size-5 rotate-45 text-brand-orange" />
+          <span className="h-px flex-1 border-t-2 border-dashed border-slate-300" />
         </div>
-      </FloatingCard>
-
-      <FloatingCard className="-bottom-5 left-6 sm:left-12">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange-dark">
-          <Award className="size-5" />
-        </span>
-        <div>
-          <p className="text-sm font-bold text-[#0f1b2d]">Certificate earned</p>
-          <p className="text-xs text-slate-500">With a verification code</p>
+        <div className="text-right">
+          <p className="font-heading text-3xl font-extrabold leading-none text-[#0f1b2d]">ICN</p>
+          <p className="mt-1 text-[0.7rem] text-slate-500">Seoul Incheon</p>
         </div>
-      </FloatingCard>
+      </div>
+      <div className="relative border-t-2 border-dashed border-slate-200 px-4 py-3">
+        <span className="absolute -left-2.5 -top-2.5 size-5 rounded-full bg-white ring-1 ring-slate-200/70 [clip-path:inset(50%_0_0_50%)]" />
+        <div className="grid grid-cols-3 text-[0.65rem] uppercase tracking-wider text-slate-400">
+          <span>
+            Passenger
+            <span className="mt-0.5 block text-xs font-bold normal-case tracking-normal text-[#0f1b2d]">You</span>
+          </span>
+          <span>
+            Gate
+            <span className="mt-0.5 block text-xs font-bold normal-case tracking-normal text-[#0f1b2d]">Apply</span>
+          </span>
+          <span>
+            Seat
+            <span className="mt-0.5 block text-xs font-bold normal-case tracking-normal text-[#0f1b2d]">Funded</span>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
-function FloatingCard({ className, children }: { className?: string; children: ReactNode }) {
+function JourneyStop({ stop, index }: { stop: (typeof JOURNEY)[number]; index: number }) {
+  const flip = index % 2 === 1;
   return (
-    <div
-      aria-hidden
-      className={cn(
-        "absolute flex items-center gap-3 rounded-2xl bg-white/95 py-3 pl-3 pr-5 shadow-[0_20px_40px_-18px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur",
-        className,
-      )}
-    >
+    <li className="relative grid gap-8 pl-12 md:grid-cols-2 md:gap-16 md:pl-0">
+      {/* Marker on the route line */}
+      <span className="absolute left-[1.15rem] top-1 z-10 flex size-9 -translate-x-1/2 items-center justify-center rounded-full bg-[#0f1b2d] text-sm font-extrabold text-white ring-[6px] ring-[#f7f3ec] md:left-1/2">
+        {index + 1}
+      </span>
+
+      <Reveal className={cn("md:pt-1", flip ? "md:order-2 md:pl-14" : "md:pr-14 md:text-right")}>
+        <p className="flex items-baseline gap-3 text-sm font-bold uppercase tracking-[0.2em] text-brand-orange md:inline-flex">
+          {stop.place}
+          {stop.korean && (
+            <span lang="ko" className="text-xs tracking-normal text-slate-400">
+              {stop.korean}
+            </span>
+          )}
+        </p>
+        <h3 className="mt-3 font-heading text-2xl font-extrabold leading-tight tracking-tight text-[#0f1b2d] sm:text-3xl">{stop.title}</h3>
+        <p className="mt-3 text-[1.02rem] leading-relaxed text-slate-600">{stop.body}</p>
+      </Reveal>
+
+      <div className={cn(flip ? "md:order-1 md:pr-14" : "md:pl-14")}>
+        <PhotoReveal className="relative aspect-[4/3] rounded-[24px] shadow-[0_30px_60px_-36px_rgba(15,27,45,0.6)]">
+          <Parallax offset={22} className="absolute -inset-y-8 inset-x-0">
+            <Photo photo={stop.photo} sizes="(min-width: 768px) 40vw, 90vw" />
+          </Parallax>
+        </PhotoReveal>
+      </div>
+    </li>
+  );
+}
+
+function Eyebrow({ children, dark }: { children: ReactNode; dark?: boolean }) {
+  return (
+    <p className={cn("flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em]", dark ? "text-brand-orange" : "text-brand-blue")}>
+      <span aria-hidden className={cn("h-px w-8", dark ? "bg-brand-orange" : "bg-brand-blue")} />
       {children}
-    </div>
-  );
-}
-
-function SectionHeading({ eyebrow, title, body, align = "center", dark }: { eyebrow: string; title: string; body?: string; align?: "center" | "left"; dark?: boolean }) {
-  return (
-    <div className={cn("max-w-2xl", align === "center" && "mx-auto text-center")}>
-      <p className={cn("text-sm font-bold uppercase tracking-[0.16em]", dark ? "text-brand-orange" : "text-brand-blue")}>{eyebrow}</p>
-      <h2 className={cn("mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl", dark ? "text-white" : "text-[#0f1b2d]")}>{title}</h2>
-      {body && <p className={cn("mt-4 text-lg leading-relaxed", dark ? "text-slate-300" : "text-slate-600")}>{body}</p>}
-    </div>
-  );
-}
-
-function Underline() {
-  return (
-    <svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-1.5 left-0 h-3 w-full text-brand-orange/40">
-      <path d="M2 9c60-6 140-8 296-3" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-    </svg>
+    </p>
   );
 }
 
 function SiteFooter({ supportEmail, supportWhatsapp }: { supportEmail: string | null; supportWhatsapp: string | null }) {
   return (
-    <footer className="border-t border-slate-100 bg-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:px-8">
+    <footer className="bg-white">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_auto] lg:px-8">
         <div>
           <Image src="/moresotech-logo.png" alt="MoreSo Tech" width={865} height={288} className="h-9 w-auto" />
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">Helping students prepare for, apply to and win scholarships to study in South Korea.</p>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">Helping students in Zimbabwe prepare for, apply to and win scholarships to study in South Korea.</p>
           {(supportEmail || supportWhatsapp) && (
             <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
               {supportEmail && (
@@ -520,16 +647,26 @@ function SiteFooter({ supportEmail, supportWhatsapp }: { supportEmail: string | 
         </div>
       </div>
       <div className="border-t border-slate-100">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-2 px-4 py-5 text-xs text-slate-400 sm:flex-row sm:px-6 lg:px-8">
-          <p>© {new Date().getFullYear()} MoreSo Tech. All rights reserved.</p>
+        <div className="mx-auto max-w-7xl space-y-2 px-4 py-6 text-xs text-slate-400 sm:px-6 lg:px-8">
           <p>
-            Illustrations by{" "}
-            <a href="https://storyset.com" target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-              Storyset
-            </a>
+            Photos on{" "}
+            <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
+              Unsplash
+            </a>{" "}
+            by{" "}
+            {PHOTO_CREDITS.map((c, i) => (
+              <span key={c.creditUrl}>
+                <a href={c.creditUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
+                  {c.credit}
+                </a>
+                {i < PHOTO_CREDITS.length - 2 ? ", " : i === PHOTO_CREDITS.length - 2 ? " and " : "."}
+              </span>
+            ))}
           </p>
+          <p>© {new Date().getFullYear()} MoreSo Tech. All rights reserved.</p>
         </div>
       </div>
     </footer>
   );
 }
+
