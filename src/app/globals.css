@@ -240,3 +240,24 @@
     animation: none;
   }
 }
+
+/* Equal-width groups make the testimonial loop seamless at every screen size. */
+.testimonial-track {
+  animation: marquee 48s linear infinite;
+  will-change: transform;
+}
+.testimonial-marquee:hover .testimonial-track,
+.testimonial-marquee:focus-within .testimonial-track,
+.testimonial-marquee[data-paused="true"] .testimonial-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-track {
+    animation: none;
+    transform: none;
+    will-change: auto;
+  }
+  .testimonial-track > [aria-hidden="true"] {
+    display: none;
+  }
+}
