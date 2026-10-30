@@ -9,6 +9,8 @@ import { LocalTime } from "@/components/learning/time";
 import { HeroFloat, HeroIn, HeroPhoto, WordsReveal } from "@/components/landing/hero-text";
 import { Float, Marquee, MotionProvider, Parallax, PhotoReveal, Reveal, RouteProgress, Stagger, StaggerItem } from "@/components/landing/motion";
 import { Photo } from "@/components/landing/photo";
+import { LandingNav } from "@/components/landing/landing-nav";
+import { Testimonials } from "@/components/landing/testimonials";
 import { VerifyForm } from "@/components/landing/verify-form";
 import { AnnouncementBar } from "@/components/shell/announcement-bar";
 import { getProfile, homeFor } from "@/lib/auth";
@@ -63,29 +65,6 @@ const LOCAL_POINTS: { title: string; body: string }[] = [
   { title: "Your documents stay private", body: "Passports and transcripts are stored privately. Only you and your reviewer can open them, and every view is logged." },
   { title: "Times in your time zone", body: "Live sessions and deadlines show in your local time, so 15:00 in Seoul never catches you out." },
   { title: "Free to start", body: "Browse, save scholarships and build applications for free. Paid courses show the price upfront." },
-];
-
-const FAQS: { q: string; a: string }[] = [
-  {
-    q: "Is it free to join?",
-    a: "Yes. Creating an account, browsing scholarships, saving them and building your applications is free. Some courses and certificates are paid, and each shows its price upfront.",
-  },
-  {
-    q: "Which scholarships can I find here?",
-    a: "Scholarships to study in South Korea, from language programmes to undergraduate, master's and PhD funding. Each listing shows who can apply, what it covers and what documents you'll need.",
-  },
-  {
-    q: "Who can see my documents?",
-    a: "Only you and the MoreSo Tech reviewers working on your application. Files are kept in private storage, and every time a reviewer opens a document it's recorded.",
-  },
-  {
-    q: "How do I pay for a course?",
-    a: "At checkout you choose EcoCash, InnBucks, a card or another method offered by Pesepay. Mobile money sends a prompt to your phone; your course unlocks as soon as the payment is confirmed.",
-  },
-  {
-    q: "Can a university check my certificate?",
-    a: "Yes. Every certificate has a unique code. Anyone can enter it at the bottom of this page to confirm who it was issued to and when.",
-  },
 ];
 
 export default async function Home() {
@@ -178,7 +157,7 @@ export default async function Home() {
           )}
 
           {/* ── The journey ──────────────────────────────────────── */}
-          <section id="journey" className="scroll-mt-20 bg-[#f7f3ec] py-24 sm:py-32">
+          <section id="journey" className="scroll-mt-32 md:scroll-mt-24 bg-[#f7f3ec] py-24 sm:py-32">
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               <Reveal className="max-w-2xl">
                 <Eyebrow>How it works</Eyebrow>
@@ -199,7 +178,7 @@ export default async function Home() {
           </section>
 
           {/* ── Scholarships ─────────────────────────────────────── */}
-          <section id="scholarships" className="scroll-mt-20 bg-[#0f1b2d] py-24 text-white sm:py-28">
+          <section id="scholarships" className="scroll-mt-32 md:scroll-mt-24 bg-[#0f1b2d] py-24 text-white sm:py-28">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
                 <Reveal className="max-w-2xl">
@@ -257,7 +236,7 @@ export default async function Home() {
 
           {/* ── Courses ──────────────────────────────────────────── */}
           {featuredCourses.length > 0 && (
-            <section id="courses" className="scroll-mt-20 py-24 sm:py-28">
+            <section id="courses" className="scroll-mt-32 md:scroll-mt-24 py-24 sm:py-28">
               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
                   <Reveal className="max-w-2xl">
@@ -306,7 +285,7 @@ export default async function Home() {
           )}
 
           {/* ── Made for Zimbabwe ────────────────────────────────── */}
-          <section id="local" className="scroll-mt-20 bg-[#f7f3ec] py-24 sm:py-32">
+          <section id="local" className="scroll-mt-32 md:scroll-mt-24 bg-[#f7f3ec] py-24 sm:py-32">
             <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
               <div className="relative">
                 <PhotoReveal className="relative aspect-[4/5] rounded-[28px] sm:aspect-[5/4] lg:aspect-[4/5]">
@@ -357,9 +336,11 @@ export default async function Home() {
             </div>
           </section>
 
+          <Testimonials />
+
           {/* ── Live sessions ────────────────────────────────────── */}
           {upcomingSessions.length > 0 && (
-            <section id="sessions" className="scroll-mt-20 py-24 sm:py-28">
+            <section id="sessions" className="scroll-mt-32 md:scroll-mt-24 py-24 sm:py-28">
               <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-8">
                 <Reveal>
                   <Eyebrow>Live sessions</Eyebrow>
@@ -388,42 +369,8 @@ export default async function Home() {
             </section>
           )}
 
-          {/* ── FAQ ──────────────────────────────────────────────── */}
-          <section id="faq" className="scroll-mt-20 border-t border-slate-100 py-24 sm:py-28">
-            <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-              <Reveal>
-                <Eyebrow>Questions</Eyebrow>
-                <h2 className="mt-4 font-heading text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-[#0f1b2d] sm:text-5xl">Before you start</h2>
-                {site.supportEmail && (
-                  <p className="mt-4 text-slate-600">
-                    Something else?{" "}
-                    <a href={`mailto:${site.supportEmail}`} className="font-semibold text-brand-blue underline-offset-4 hover:underline">
-                      {site.supportEmail}
-                    </a>
-                  </p>
-                )}
-              </Reveal>
-              <Reveal delay={0.1}>
-                <div className="divide-y divide-slate-200 border-y border-slate-200">
-                  {FAQS.map((f) => (
-                    <details key={f.q} className="group [&_summary::-webkit-details-marker]:hidden">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-lg font-bold text-[#0f1b2d]">
-                        {f.q}
-                        <span aria-hidden className="relative size-5 shrink-0">
-                          <span className="absolute left-0 top-1/2 h-0.5 w-5 -translate-y-1/2 rounded bg-brand-orange" />
-                          <span className="absolute left-1/2 top-0 h-5 w-0.5 -translate-x-1/2 rounded bg-brand-orange transition-transform duration-300 group-open:scale-y-0" />
-                        </span>
-                      </summary>
-                      <p className="-mt-2 pb-6 pr-10 leading-relaxed text-slate-600">{f.a}</p>
-                    </details>
-                  ))}
-                </div>
-              </Reveal>
-            </div>
-          </section>
-
           {/* ── Final call to action ─────────────────────────────── */}
-          <section className="px-4 pb-6 sm:px-6 lg:px-8">
+          <section className="px-4 pb-6 pt-12 sm:px-6 lg:px-8">
             <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem]">
               <Parallax offset={40} className="absolute -inset-y-16 inset-x-0">
                 <Photo photo={PHOTOS.graduatesGroup} sizes="100vw" />
@@ -459,25 +406,13 @@ export default async function Home() {
 // ─── Pieces ────────────────────────────────────────────────────────────────
 
 function SiteHeader() {
-  const links = [
-    { href: "#journey", label: "How it works" },
-    { href: "#scholarships", label: "Scholarships" },
-    { href: "#local", label: "Why us" },
-    { href: "#faq", label: "FAQ" },
-  ];
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 mb-12 border-b md:mb-0 border-slate-200/60 bg-white/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
         <Link href="/" aria-label="MoreSo Tech home" className="shrink-0">
           <Image src="/moresotech-logo.png" alt="MoreSo Tech" width={865} height={288} preload className="h-9 w-auto sm:h-10" />
         </Link>
-        <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm font-semibold text-slate-600 transition hover:text-[#0f1b2d]">
-              {l.label}
-            </a>
-          ))}
-        </nav>
+        <LandingNav />
         <div className="flex items-center gap-2">
           <Link href="/sign-in" className="hidden h-10 items-center rounded-full px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:inline-flex">
             Sign in
