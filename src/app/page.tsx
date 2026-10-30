@@ -9,7 +9,7 @@ import { LocalTime } from "@/components/learning/time";
 import { HeroFloat, HeroIn, HeroPhoto, WordsReveal } from "@/components/landing/hero-text";
 import { Float, Marquee, MotionProvider, Parallax, PhotoReveal, Reveal, RouteProgress, Stagger, StaggerItem } from "@/components/landing/motion";
 import { Photo } from "@/components/landing/photo";
-import { LandingNav } from "@/components/landing/landing-nav";
+import { LandingHeader } from "@/components/landing/landing-nav";
 import { Testimonials } from "@/components/landing/testimonials";
 import { VerifyForm } from "@/components/landing/verify-form";
 import { AnnouncementBar } from "@/components/shell/announcement-bar";
@@ -86,11 +86,11 @@ export default async function Home() {
     <MotionProvider>
       <div className="flex min-h-full flex-col bg-white text-slate-900">
         {announcement && <AnnouncementBar {...announcement} className="rounded-none px-4 py-2.5 sm:justify-center [&>p]:flex-none" />}
-        <SiteHeader />
+        <LandingHeader showCourses={featuredCourses.length > 0} showSessions={upcomingSessions.length > 0} />
 
         <main className="flex-1 overflow-x-clip">
           {/* ── Hero ─────────────────────────────────────────────── */}
-          <section className="relative">
+          <section id="home" className="relative scroll-mt-24">
             <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 pb-20 pt-10 sm:px-6 lg:grid-cols-12 lg:gap-6 lg:px-8 lg:pb-28 lg:pt-14">
               <div className="lg:col-span-6">
                 <HeroIn>
@@ -404,27 +404,6 @@ export default async function Home() {
 }
 
 // ─── Pieces ────────────────────────────────────────────────────────────────
-
-function SiteHeader() {
-  return (
-    <header className="sticky top-0 z-40 mb-12 border-b md:mb-0 border-slate-200/60 bg-white/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
-        <Link href="/" aria-label="MoreSo Tech home" className="shrink-0">
-          <Image src="/moresotech-logo.png" alt="MoreSo Tech" width={865} height={288} preload className="h-9 w-auto sm:h-10" />
-        </Link>
-        <LandingNav />
-        <div className="flex items-center gap-2">
-          <Link href="/sign-in" className="hidden h-10 items-center rounded-full px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:inline-flex">
-            Sign in
-          </Link>
-          <Link href="/sign-up" className="inline-flex h-10 items-center rounded-full bg-[#0f1b2d] px-5 text-sm font-semibold text-white transition hover:bg-[#1a2a42]">
-            Get started
-          </Link>
-        </div>
-      </div>
-    </header>
-  );
-}
 
 /** Three photos and a boarding pass, layered, each moving at its own pace. */
 function HeroCollage({ heroUrl }: { heroUrl: string | null }) {

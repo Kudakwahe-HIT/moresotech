@@ -290,3 +290,13 @@
 }
 .testimonial-signature::before { left: 0; top: -16px; }
 .testimonial-signature::after { right: -16px; bottom: 0; }
+
+@keyframes menu-slide-in {
+  from { opacity: 0; transform: translateX(32px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.landing-menu[open] { animation: menu-slide-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.landing-menu[open] .landing-menu-link { animation: fade-rise 400ms ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .landing-menu[open], .landing-menu[open] .landing-menu-link { animation: none; }
+}
