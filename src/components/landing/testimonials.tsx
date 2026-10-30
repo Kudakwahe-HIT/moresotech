@@ -16,18 +16,17 @@ export function Testimonials() {
   const [paused, setPaused] = useState(false);
 
   const cards = (duplicate = false) => (
-    <ul aria-hidden={duplicate || undefined} className="flex shrink-0 items-stretch gap-6 pr-6">
+    <ul aria-hidden={duplicate || undefined} className="flex shrink-0 items-stretch gap-5 pr-5">
       {TESTIMONIALS.map((item) => (
-        <li key={item.initials} className="w-[min(82vw,24rem)] shrink-0 pb-3 pt-3">
-          <figure className="group/card relative flex h-full flex-col rounded-[1.75rem] border border-white/90 bg-white p-6 shadow-[0_12px_35px_-20px_rgba(15,27,45,0.25)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_22px_45px_-20px_rgba(15,27,45,0.3)] motion-reduce:transform-none sm:p-8">
-            <Quote aria-hidden className="size-9 fill-brand-orange/15 text-brand-orange" strokeWidth={1.3} />
-            <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-brand-blue">{item.topic}</p>
-            <blockquote className="mb-8 mt-4 flex-1 text-base leading-[1.85] text-slate-600">&ldquo;{item.quote}&rdquo;</blockquote>
-            <figcaption className="flex items-center gap-4 border-t border-slate-100 pt-5">
-              <div className="relative h-24 w-[4.5rem] shrink-0 overflow-hidden rounded-2xl bg-[#e7e1d8] ring-4 ring-[#f7f3ec]">
-                <Image src={`/images/testimonials/portrait-${item.initials}.png`} alt="" fill sizes="72px" className="object-contain" />
+        <li key={item.initials} className="testimonial-item shrink-0 pb-3 pt-3">
+          <figure className="relative flex h-full min-h-[22rem] flex-col rounded-2xl bg-[#faf9ff] px-6 pb-28 pt-6 transition-transform duration-300 hover:-translate-y-1 motion-reduce:transform-none sm:px-7">
+            <Quote aria-hidden className="size-8 fill-slate-200/60 text-slate-200/80" strokeWidth={1.3} />
+            <blockquote className="mt-5 flex-1 text-[0.95rem] leading-[1.75] text-slate-600">&ldquo;{item.quote}&rdquo;</blockquote>
+            <figcaption className="testimonial-signature absolute bottom-0 left-0 flex w-[84%] items-center gap-3 rounded-tr-2xl bg-[#e3e4e8] pb-1 pr-3 pt-3">
+              <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-full bg-[#e7e1d8]">
+                <Image src={`/images/testimonials/portrait-${item.initials}.png`} alt="" fill sizes="48px" className="object-contain" />
               </div>
-              <div><p className="text-sm font-bold text-[#0f1b2d]">{item.name}</p><p className="mt-1 text-xs text-slate-500">MoreSo Tech community</p></div>
+              <div><p className="text-xs font-bold text-[#0f1b2d]">{item.name}</p><p className="mt-1 text-[0.6rem] text-slate-500">MoreSo Tech community</p></div>
             </figcaption>
           </figure>
         </li>
@@ -36,14 +35,11 @@ export function Testimonials() {
   );
 
   return (
-    <section id="testimonials" aria-labelledby="testimonials-heading" className="scroll-mt-32 overflow-hidden bg-[#eeeff2] py-20 sm:py-28">
+    <section id="testimonials" aria-labelledby="testimonials-heading" className="scroll-mt-32 overflow-hidden bg-[#e3e4e8] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-blue">Our community</p>
-          <h2 id="testimonials-heading" className="mt-4 font-heading text-4xl font-extrabold leading-[1.1] tracking-[-0.04em] text-[#0f1b2d] sm:text-6xl">Their journeys.<br className="sm:hidden" /> <span className="text-brand-orange">Their words.</span></h2>
-          <p className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-slate-500">The people taking their next step with MoreSo Tech.</p>
+          <h2 id="testimonials-heading" className="font-heading text-3xl font-extrabold leading-[1.1] tracking-[-0.03em] text-[#0f1b2d] sm:text-5xl">Student <span className="text-brand-orange">Testimonials</span></h2>
         </Reveal>
-      </div>
 
       <div role="region" aria-label="Student testimonials" tabIndex={0} className="testimonial-marquee mt-10 overflow-x-auto py-4 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-orange sm:mt-14" data-paused={paused}>
         <div className="testimonial-track flex w-max items-stretch">
@@ -53,12 +49,12 @@ export function Testimonials() {
       </div>
 
       <div className="mx-auto mt-6 flex max-w-7xl items-center justify-center gap-5 px-4">
-        <span aria-hidden className="h-px w-12 bg-slate-300" />
+        <span aria-hidden className="flex gap-1.5"><span className="size-2 rounded-full bg-slate-400/50" /><span className="size-2 rounded-full bg-brand-orange" /><span className="size-2 rounded-full bg-slate-400/50" /></span>
         <button type="button" onClick={() => setPaused((value) => !value)} aria-pressed={paused} className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-brand-orange hover:text-brand-orange-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-orange">
           {paused ? <Play aria-hidden className="size-3.5" /> : <Pause aria-hidden className="size-3.5" />}
           {paused ? "Resume stories" : "Pause stories"}
         </button>
-        <span aria-hidden className="h-px w-12 bg-slate-300" />
+      </div>
       </div>
     </section>
   );

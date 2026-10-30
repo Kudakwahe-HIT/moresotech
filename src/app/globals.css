@@ -261,3 +261,32 @@
     display: none;
   }
 }
+
+.testimonial-marquee {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.testimonial-marquee::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.testimonial-item { width: min(78vw, 23.875rem); }
+@media (min-width: 640px) {
+  .testimonial-item { width: calc((100vw - 4.25rem) / 2); }
+}
+@media (min-width: 1024px) {
+  .testimonial-item { width: calc((min(100vw, 80rem) - 6.5rem) / 3); }
+}
+/* Concave corners connect the author notch to the rounded card body. */
+.testimonial-signature::before,
+.testimonial-signature::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle at top right, transparent 16px, #e3e4e8 16.5px);
+  pointer-events: none;
+}
+.testimonial-signature::before { left: 0; top: -16px; }
+.testimonial-signature::after { right: -16px; bottom: 0; }
